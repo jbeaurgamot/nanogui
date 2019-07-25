@@ -107,3 +107,26 @@ struct DataItem(T)
 	auto preferredSize(NVG)(NVG nvg) const { return Vector2i(0, 0); }
 	auto fixedSize()  const nothrow @safe pure @nogc  { return _size; }
 }
+
+mixin template DependencyProperty(T, alias string name)
+{
+	import std.string : capitalize;
+
+	protected
+	{
+		mixin("T m" ~ name.capitalize ~ ";");
+	}
+	public 
+	{
+		import std.format : format;
+		mixin (format(q{
+			final T %1$s() const { return m%2$s; }
+			final void %1$s(T value)
+			{ 
+				if (value == m%2$s) return;
+				m%2$s = value;
+				invalidate();
+			}
+		}, name, name.capitalize));
+	}
+}
