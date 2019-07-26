@@ -49,7 +49,7 @@ public:
 		import std.random, std.conv;
 		foreach(i; 0..uniform(2, 5))
 		{
-			auto item = DataItem!string(text("item", i), Vector2i(80, cast(int)(fontSize() * 1.3f)));
+			auto item = DataItem!string(text("item", i), Vector2i(120, cast(int)(fontSize() * 1.3f)));
 			item.position = Vector2i(mPos.x + shift, shift * i);
 			items ~= item;
 		}
@@ -202,7 +202,7 @@ public:
 			ctx.position.y = 10;
 			foreach(item; items)
 			{
-				ctx.position = item.position;
+				ctx.position = item.position + Vector2i(20, 60);
 				item.draw(ctx, "header");
 			}
 		}

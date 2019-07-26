@@ -409,11 +409,11 @@ class MyGui : SdlBackend
 		{
 			auto window = new Window(screen, "TreeView demo");
 			window.position(Vector2i(400, 245));
-			window.size = Vector2i(screen.size.x - 30, screen.size.y - 30);
+			// window.size = Vector2i(screen.size.x - 30, screen.size.y - 30);
 			window.layout(new BoxLayout(Orientation.Vertical));
 
 			import nanogui.experimental.treeview;
-			new TreeView(window, "TreeView", null);
+			new TreeView(window, "TreeView_______", null);
 		}
 
 		// now we should do layout manually yet
