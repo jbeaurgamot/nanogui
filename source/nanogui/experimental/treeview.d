@@ -198,8 +198,11 @@ public:
 			nvg.textAlign(algn);
 			import nanogui.experimental.utils : Context;
 			auto ctx = Context(nvg);
+			ctx.position.x = 10;
+			ctx.position.y = 10;
 			foreach(item; items)
 			{
+				ctx.position = item.position;
 				item.draw(ctx, "header");
 			}
 		}
