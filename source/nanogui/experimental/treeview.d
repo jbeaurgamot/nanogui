@@ -14,7 +14,7 @@ import nanogui.widget;
 import nanogui.common : Vector2i, Vector2f, MouseButton;
 
 /**
- * Two-state check box widget.
+ * Tree view widget.
  *
  * Remarks:
  *     This class overrides `nanogui.Widget.mIconExtraScale` to be `1.2f`,
@@ -23,6 +23,7 @@ import nanogui.common : Vector2i, Vector2f, MouseButton;
  */
 class TreeView : Widget
 {
+	import nanogui.experimental.utils : DataItem;
 public:
 	/**
 	 * Adds a TreeView to the specified `parent`.
@@ -42,7 +43,16 @@ public:
 		mPushed = false;
 		mChecked = false;
 		mCallback = callback;
-		mIconExtraScale = 1.2f;// widget override}
+		mIconExtraScale = 1.2f;// widget override
+
+		const shift = cast(int)(fontSize() * 1.3f);
+		import std.random, std.conv;
+		foreach(i; 0..uniform(2, 5))
+		{
+			auto item = DataItem!string(text("item", i), Vector2i(80, cast(int)(fontSize() * 1.3f)));
+			item.position = Vector2i(mPos.x + shift, shift * i);
+			items ~= item;
+		}
 	}
 
 	/// The caption of this TreeView.
@@ -141,7 +151,7 @@ public:
 		algn.left = true;
 		algn.middle = true;
 		nvg.textAlign(algn);
-		vec2i titleSize;
+		Vector2i titleSize;
 		if (mChecked)
 		{
 			titleSize = mSize;
@@ -191,7 +201,7 @@ public:
 			{
 				nvg.text(mPos.x + titleSize.y,
 					mPos.y + titleSize.y * 0.5f + i++ * fontSize() * 1.3f,
-					item);
+					item.content);
 			}
 		}
 	}
@@ -224,12 +234,12 @@ protected:
 			_mChecked = v;
 			import std.stdio;
 			writeln("mChecked changed: ", v);
-			mSize += vec2i(0, v ? 100 : -100);
+			mSize += Vector2i(0, v ? 100 : -100);
 			screen.needToPerfomLayout = true;
 		}
 	}
 
-	string[] items = [ "item1", "item2", "item3" ];
+	DataItem!string[] items;
 
 	/// The function to execute when `nanogui.TreeView.mChecked` is changed.
 	void delegate(bool) mCallback;
