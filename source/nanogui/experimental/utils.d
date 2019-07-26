@@ -4,25 +4,25 @@ struct Context
 {
 	@disable this(this);
 
-	import arsd.nanovega : NVGContext;
+	import arsd.nanovega : NVGContext, NVGTextAlign, textAlign, text;
+	import nanogui.common : Vector2i;
+
 	NVGContext nvg;
 	alias nvg this;
 
 	this(NVGContext c)
 	{
 		nvg = c;
+		algn.left = true;
+		algn.middle = true;
 	}
 
-	import nanogui.common : Vector2i;
+	NVGTextAlign algn;
 	Vector2i position;
 }
 
-void drawItem(ref Context ctx, float height, const(char)[] str /*buffer[0..l]*/)
+void drawItem(ref Context ctx, float height, const(char)[] str)
 {
-	import arsd.nanovega : NVGTextAlign, textAlign, text;
-	NVGTextAlign algn;
-	algn.left = true;
-	algn.middle = true;
 	with(ctx)
 	{
 		nvg.textAlign(algn);
@@ -35,7 +35,6 @@ struct DataItem(T)
 {
 	import std.traits : isAggregateType, isPointer, isArray, isSomeString, isAssociativeArray;
 	import gfm.math : vec2i;
-	import arsd.nanovega : NVGTextAlign, textAlign, text;
 	import nanogui.common : Vector2i;
 
 	enum textBufferSize = 1024;
