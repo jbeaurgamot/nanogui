@@ -130,3 +130,130 @@ mixin template DependencyProperty(T, alias string name)
 		}, name, name.capitalize));
 	}
 }
+
+// helpers
+
+private string enumToString(E)(E e) @nogc @safe nothrow
+	if (is(E == enum))
+{
+	import std.traits : Unqual;
+
+	// using `if` instead of `final switch` is simple
+	// workaround of duplicated enum members
+	static foreach(v; __traits(allMembers, E))
+		mixin("if (e == E." ~ v ~ ") return `" ~ v ~ "`;");
+	return "Unrepresentable by " ~ Unqual!E.stringof ~ " value";
+}
+
+import std.traits : isTypeTuple;
+
+private template isNullable(T)
+{
+	import std.traits : hasMember;
+
+	static if (
+		hasMember!(T, "isNull") &&
+		is(typeof(__traits(getMember, T, "isNull")) == bool) &&
+		(
+			(hasMember!(T, "get") && !is(typeof(__traits(getMember, T, "get")) == void)) ||
+			(hasMember!(T, "value") && !is(typeof(__traits(getMember, T, "value")) == void))
+		) &&
+		hasMember!(T, "nullify") &&
+		is(typeof(__traits(getMember, T, "nullify")) == void)
+	)
+	{
+		enum isNullable = true;
+	}
+	else
+	{
+		enum isNullable = false;
+	}
+}
+
+private bool privateOrPackage()(string protection)
+{
+	return protection == "private" || protection == "package";
+}
+
+// check if the member is readable/writeble?
+private enum isReadableAndWritable(alias aggregate, string member) = __traits(compiles, __traits(getMember, aggregate, member) = __traits(getMember, aggregate, member));
+private enum isPublic(alias aggregate, string member) = !__traits(getProtection, __traits(getMember, aggregate, member)).privateOrPackage;
+
+// check if the member is property with const qualifier
+private template isConstProperty(alias aggregate, string member)
+{
+	import std.traits : isSomeFunction, hasFunctionAttributes;
+
+	static if(isSomeFunction!(__traits(getMember, aggregate, member)))
+		enum isConstProperty = hasFunctionAttributes!(__traits(getMember, aggregate, member), "const", "@property");
+	else
+		enum isConstProperty = false;
+}
+
+// check if the member is readable
+private enum isReadable(alias aggregate, string member) = __traits(compiles, { auto _val = __traits(getMember, aggregate, member); });
+
+private template isItSequence(T...)
+{
+	static if (T.length < 2)
+		enum isItSequence = false;
+	else
+		enum isItSequence = true;
+}
+
+private template hasProtection(alias aggregate, string member)
+{
+	enum hasProtection = __traits(compiles, { enum pl = __traits(getProtection, __traits(getMember, aggregate, member)); });
+}
+
+// This trait defines what members should be drawn -
+// public members that are either readable and writable or getter properties
+private template Drawable(alias value, string member)
+{
+	import std.algorithm : among;
+	import std.traits : isTypeTuple, isSomeFunction;
+
+	static if (isItSequence!value)
+		enum Drawable = false;
+	else
+	static if (hasProtection!(value, member) && !isPublic!(value, member))
+			enum Drawable = false;
+	else
+	static if (isItSequence!(__traits(getMember, value, member)))
+		enum Drawable = false;
+	else
+	static if(member.among("__ctor", "__dtor"))
+		enum Drawable = false;
+	else
+	static if (isReadableAndWritable!(value, member) && !isSomeFunction!(__traits(getMember, value, member)))
+		enum Drawable = true;
+	else
+	static if (isReadable!(value, member))
+		enum Drawable = isConstProperty!(value, member); // a readable property is getter
+	else
+		enum Drawable = false;
+}
+
+/// returns alias sequence, members of which are members of value
+/// that should be drawn
+private template DrawableMembers(alias A)
+{
+	import std.meta : ApplyLeft, Filter, AliasSeq;
+	import std.traits : isType, Unqual;
+
+	static if (isType!A)
+	{
+		alias Type = Unqual!A;
+	}
+	else
+	{
+		alias Type = Unqual!(typeof(A));
+	}
+
+	Type symbol;
+
+	alias AllMembers = AliasSeq!(__traits(allMembers, Type));
+	alias isProper = ApplyLeft!(Drawable, symbol);
+	alias DrawableMembers = Filter!(isProper, AllMembers);
+
+}
