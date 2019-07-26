@@ -1,5 +1,36 @@
 module nanogui.experimental.utils;
 
+struct Context
+{
+	@disable this(this);
+
+	import arsd.nanovega : NVGContext;
+	NVGContext nvg;
+	alias nvg this;
+
+	this(NVGContext c)
+	{
+		nvg = c;
+	}
+
+	import nanogui.common : Vector2i;
+	Vector2i position;
+}
+
+void drawItem(ref Context ctx, float height, const(char)[] str /*buffer[0..l]*/)
+{
+	import arsd.nanovega : NVGTextAlign, textAlign, text;
+	NVGTextAlign algn;
+	algn.left = true;
+	algn.middle = true;
+	with(ctx)
+	{
+		nvg.textAlign(algn);
+		nvg.text(position.x, position.y, str);
+		position.y += cast(int) height;
+	}
+}
+
 struct DataItem(T)
 {
 	import std.traits : isAggregateType, isPointer, isArray, isSomeString, isAssociativeArray;
@@ -19,7 +50,7 @@ struct DataItem(T)
 		_size = s;
 	}
 
-	auto draw(Context)(Context ctx, const(char)[] header)
+	auto draw(Context)(ref Context ctx, const(char)[] header)
 		if (!isAggregateType!T && 
 			!isPointer!T &&
 			(!isArray!T || isSomeString!T) &&
@@ -51,11 +82,7 @@ struct DataItem(T)
 		else
 			static assert(0, T.stringof);
 
-		NVGTextAlign algn;
-		algn.left = true;
-		algn.middle = true;
-		ctx.textAlign(algn);
-		ctx.text(position.x, position.y + size.y * 0.5f, buffer[0..l]);
+		ctx.drawItem(size.y * 0.5f, buffer[0..l]);
 	}
 
 	// auto draw(Context)(Context ctx, const(char)[] header)

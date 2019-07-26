@@ -52,13 +52,19 @@ private class ListImplementor : Widget
 			_scroll_position = scroll_position;
 		}
 
+		import nanogui.experimental.utils : Context;
+		auto ctx = Context(nvg);
+
 		import std.algorithm : min;
 		foreach(child; data[_start_item..min(_finish_item, $)])
 		{
 			nvg.save;
 			scope(exit) nvg.restore;
 
-			child.draw(nvg, "");
+			ctx.position.x = child.position.x;
+			ctx.position.y = child.position.y;
+
+			child.draw(ctx, "");
 		}
 		nvg.restore;
 	}

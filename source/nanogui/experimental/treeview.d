@@ -196,12 +196,11 @@ public:
 			algn.left = true;
 			algn.middle = true;
 			nvg.textAlign(algn);
-			size_t i = 1;
+			import nanogui.experimental.utils : Context;
+			auto ctx = Context(nvg);
 			foreach(item; items)
 			{
-				nvg.text(mPos.x + titleSize.y,
-					mPos.y + titleSize.y * 0.5f + i++ * fontSize() * 1.3f,
-					item.content);
+				item.draw(ctx, "header");
 			}
 		}
 	}
