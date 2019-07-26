@@ -291,43 +291,12 @@ class MyGui : SdlBackend
 			window.tooltip = "Window with ComboBox tooltip";
 		}
 
-		// {
-		// 	int width      = 340;
-		// 	int half_width = width / 2;
-		// 	int height     = 35;
-
-		// 	auto window = new Window(screen, "All Icons");
-		// 	window.setId = "window";
-		// 	window.position(Vector2i(10, 400));
-		// 	window.fixedSize(Vector2i(width, height));
-
-		// 	// attach a vertical scroll panel
-		// 	auto vscroll = new VScrollPanel(window);
-		// 	vscroll.setId = "vscroll";
-		// 	vscroll.fixedSize(Vector2i(width, height));
-
-		// 	// vscroll should only have *ONE* child. this is what `wrapper` is for
-		// 	auto wrapper = new Widget(vscroll);
-		// 	wrapper.setId = "wrapper";
-		// 	wrapper.fixedSize(Vector2i(width, height));
-		// 	wrapper.layout(new BoxLayout(Orientation.Vertical));
-
-		// 	foreach(i; 0..5_000)
-		// 	{
-		// 		import std.conv : text;
-		// 		auto item = new Button(wrapper, text("item", i), Entypo.ICON_AIRCRAFT_TAKE_OFF);
-		// 		item.setId = text("item", i);
-		// 		item.iconPosition(Button.IconPosition.Left);
-		// 		item.fixedWidth(half_width);
-		// 	}
-		// }
-
 		{
 			int width      = 340;
 			int half_width = width / 2;
 			int height     = 350;
 
-			auto window = new Window(screen, "All Icons");
+			auto window = new Window(screen, "Huge list demo");
 			window.setId = "window";
 			window.position(Vector2i(10, 400));
 			window.fixedSize(Vector2i(width, height));
@@ -435,6 +404,16 @@ class MyGui : SdlBackend
 			cpuWatcher = new ProcessCPUWatcher(thisProcessID);
 
 			lblCpuUsage = new Label(window, cpuWatcher.current().text, "sans-bold");
+		}
+
+		{
+			auto window = new Window(screen, "TreeView demo");
+			window.position(Vector2i(400, 245));
+			window.size = Vector2i(screen.size.x - 30, screen.size.y - 30);
+			window.layout(new BoxLayout(Orientation.Vertical));
+
+			import nanogui.experimental.treeview;
+			new TreeView(window, "TreeView", null);
 		}
 
 		// now we should do layout manually yet
