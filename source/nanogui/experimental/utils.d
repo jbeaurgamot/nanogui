@@ -81,7 +81,7 @@ struct DataItem(T)
 		else
 			static assert(0, T.stringof);
 
-		ctx.drawItem(size.y * 0.5f, buffer[0..l]);
+		ctx.drawItem(20, buffer[0..l]);
 	}
 
 	// auto draw(Context)(Context ctx, const(char)[] header)
