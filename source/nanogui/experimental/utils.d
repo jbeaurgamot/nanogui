@@ -40,7 +40,6 @@ struct DataItem(T)
 	enum textBufferSize = 1024;
 
 	T content;
-	private vec2i _position;
 	private vec2i _size;
 
 	this(string c, vec2i s)
@@ -49,7 +48,7 @@ struct DataItem(T)
 		_size = s;
 	}
 
-	auto draw(Context)(ref Context ctx, const(char)[] header)
+	auto draw(Context)(ref Context ctx, const(char)[] header, float height)
 		if (!isAggregateType!T && 
 			!isPointer!T &&
 			(!isArray!T || isSomeString!T) &&
@@ -81,7 +80,7 @@ struct DataItem(T)
 		else
 			static assert(0, T.stringof);
 
-		ctx.drawItem(20, buffer[0..l]);
+		ctx.drawItem(height, buffer[0..l]);
 	}
 
 	// auto draw(Context)(Context ctx, const(char)[] header)
@@ -123,9 +122,6 @@ struct DataItem(T)
 
 	auto visible() const nothrow @safe pure @nogc { return true; }
 	auto performLayout(NVG)(NVG nvg) { };
-
-	auto position() const nothrow @safe pure @nogc { return _position; }
-	auto position(vec2i v) nothrow @safe pure @nogc { _position = v; }
 
 	auto size() const nothrow @safe pure @nogc { return _size; }
 	auto size(vec2i v) nothrow @safe pure @nogc { _size = v; }

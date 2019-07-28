@@ -45,6 +45,7 @@ private class ListImplementor : Widget
 
 		import std.math : approxEqual;
 		auto l = cast(List) parent;
+		assert(l);
 		const scroll_position = cast(size_t) (l.mScroll * (size.y - l.size.y));
 		if (_scroll_position != scroll_position)
 		{
@@ -54,6 +55,7 @@ private class ListImplementor : Widget
 
 		import nanogui.experimental.utils : Context;
 		auto ctx = Context(nvg);
+		ctx.position.y = cast(int) _scroll_position;
 
 		import std.algorithm : min;
 		foreach(child; data[_start_item..min(_finish_item, $)])
@@ -61,10 +63,7 @@ private class ListImplementor : Widget
 			nvg.save;
 			scope(exit) nvg.restore;
 
-			ctx.position.x = child.position.x;
-			ctx.position.y = child.position.y;
-
-			child.draw(ctx, "");
+			child.draw(ctx, "", child.size.y);
 		}
 		nvg.restore;
 	}
@@ -269,7 +268,6 @@ private class ListImplementor : Widget
 					break;
 			}
 
-			dataitem.position(pos);
 			dataitem.size(targetSize);
 			dataitem.performLayout(nvg);
 			position += targetSize[axis1];
