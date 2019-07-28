@@ -171,45 +171,36 @@ private class ListImplementor : Widget
 			return size_inited[hashOf(this)];
 
 		import nanogui.window : Window;
-		import nanogui.layout : BoxLayout, Orientation;
+		import nanogui.layout : BoxLayout, Orientation, axisIndex, nextAxisIndex;
 
 		auto layout = cast(BoxLayout) mLayout;
 		assert(layout);
-		Vector2i size = Vector2i(2*layout.margin, 2*layout.margin);
+		Vector2i size;
 		int yOffset = 0;
 		auto window = cast(Window) this;
-		if (window && window.title().length) {
+		if (window && window.title.length)
+		{
 			if (layout.orientation == Orientation.Vertical)
 				size[1] += theme.mWindowHeaderHeight - layout.margin/2;
 			else
 				yOffset = theme.mWindowHeaderHeight;
 		}
 
-		bool first = true;
-		int axis1 = cast(int) layout.orientation;
-		int axis2 = (cast(int) layout.orientation + 1)%2;
-		foreach (w; data)
+		int visible_widget_count;
+		int axis1 = layout.orientation.axisIndex;
+		int axis2 = layout.orientation.nextAxisIndex;
+		foreach(ref dataitem; data)
 		{
-			if (!w.visible)
+			if (!dataitem.visible) 
 				continue;
-			if (first)
-				first = false;
-			else
-				size[axis1] += layout.spacing;
-
-			// here we need to calculate the widget size using
-			// its fixed and preferred sizes.
-			// Because there is no fixed size for list items then
-			// we directly get size of the item
-			auto targetSize = Vector2i(
-				w.size.x,
-				w.size.y,
-			);
-
-			size[axis1] += targetSize[axis1];
-			size[axis2] = max(size[axis2], targetSize[axis2] + 2*layout.margin);
-			first = false;
+			visible_widget_count++;
+			// accumulate the primary axis size
+			size[axis1] += dataitem.size[axis1];
+			// the secondary axis size is equal to the max size of dataitems
+			size[axis2] = max(size[axis2], dataitem.size[axis2]);
 		}
+		size[axis1] += 2*layout.margin + (visible_widget_count - 1) * layout.spacing;
+		size[axis2] += 2*layout.margin;
 		size_inited[this.hashOf] = size;
 		return size + Vector2i(0, yOffset);
 	}
