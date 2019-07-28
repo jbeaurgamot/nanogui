@@ -129,9 +129,6 @@ struct DataItem(T)
 
 	auto size() const nothrow @safe pure @nogc { return _size; }
 	auto size(vec2i v) nothrow @safe pure @nogc { _size = v; }
-
-	auto preferredSize(NVG)(NVG nvg) const { return Vector2i(0, 0); }
-	auto fixedSize()  const nothrow @safe pure @nogc  { return _size; }
 }
 
 mixin template DependencyProperty(T, alias string name)

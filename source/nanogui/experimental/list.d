@@ -198,11 +198,13 @@ private class ListImplementor : Widget
 			else
 				size[axis1] += layout.spacing;
 
-			Vector2i ps = w.preferredSize(nvg);
-			Vector2i fs = w.fixedSize();
+			// here we need to calculate the widget size using
+			// its fixed and preferred sizes.
+			// Because there is no fixed size for list items then
+			// we directly get size of the item
 			auto targetSize = Vector2i(
-				fs.x ? fs.x : ps.x,
-				fs.y ? fs.y : ps.y
+				w.size.x,
+				w.size.y,
 			);
 
 			size[axis1] += targetSize[axis1];
@@ -258,10 +260,13 @@ private class ListImplementor : Widget
 			else
 				position += layout.spacing;
 
-			Vector2i ps = w.preferredSize(nvg), fs = w.fixedSize();
+			// here we need to calculate the widget size using
+			// its fixed and preferred sizes.
+			// Because there is no fixed size for list items then
+			// we directly get size of the item
 			auto targetSize = Vector2i(
-				fs.x ? fs.x : ps.x,
-				fs.y ? fs.y : ps.y
+				w.size.x,
+				w.size.y,
 			);
 			auto pos = Vector2i(0, yOffset);
 
@@ -280,7 +285,8 @@ private class ListImplementor : Widget
 					break;
 				case Alignment.Fill:
 					pos[axis2] += layout.margin;
-					targetSize[axis2] = fs[axis2] ? fs[axis2] : (containerSize[axis2] - layout.margin * 2);
+					// targetSize[axis2] = fs[axis2] ? fs[axis2] : (containerSize[axis2] - layout.margin * 2);
+					targetSize[axis2] = containerSize[axis2] - layout.margin * 2;
 					break;
 			}
 
