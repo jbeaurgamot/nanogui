@@ -209,55 +209,45 @@ private class ListImplementor : Widget
 	override void performLayout(NVGContext nvg)
 	{
 		import nanogui.window : Window;
-		import nanogui.layout : BoxLayout, Orientation, Alignment;
+		import nanogui.layout : BoxLayout, Orientation, Alignment, axisIndex, nextAxisIndex;
 
 		auto layout = cast(BoxLayout) mLayout;
 		assert(layout);
 
-		auto widget = this;
-		Vector2i fs_w = widget.fixedSize();
+		Vector2i fs_w = fixedSize();
 		auto containerSize = Vector2i(
-			fs_w[0] ? fs_w[0] : widget.width,
-			fs_w[1] ? fs_w[1] : widget.height
+			fs_w[0] ? fs_w[0] : width,
+			fs_w[1] ? fs_w[1] : height
 		);
 
-		int axis1 = cast(int) layout.orientation;
-		int axis2 = (cast(int) layout.orientation + 1)%2;
+		int axis1 = layout.orientation.axisIndex;
+		int axis2 = layout.orientation.nextAxisIndex;
 		int position = layout.margin;
-		int yOffset = 0;
+		int yOffset;
 
 		import nanogui.window : Window;
-		auto window = cast(const Window)(widget);
+		auto window = cast(const Window) this;
 		if (window && window.title.length)
 		{
 			if (layout.orientation == Orientation.Vertical)
 			{
-				position += widget.theme.mWindowHeaderHeight - layout.margin/2;
+				position += theme.mWindowHeaderHeight - layout.margin/2;
 			}
 			else
 			{
-				yOffset = widget.theme.mWindowHeaderHeight;
+				yOffset = theme.mWindowHeaderHeight;
 				containerSize[1] -= yOffset;
 			}
 		}
 
-		bool first = true;
-		foreach(ref w; widget.data) {
-			if (!w.visible)
+		int visible_widget_count;
+		foreach(ref dataitem; data) {
+			if (!dataitem.visible)
 				continue;
-			if (first)
-				first = false;
-			else
-				position += layout.spacing;
+			position += layout.spacing;
+			visible_widget_count++;
 
-			// here we need to calculate the widget size using
-			// its fixed and preferred sizes.
-			// Because there is no fixed size for list items then
-			// we directly get size of the item
-			auto targetSize = Vector2i(
-				w.size.x,
-				w.size.y,
-			);
+			Vector2i targetSize = dataitem.size;
 			auto pos = Vector2i(0, yOffset);
 
 			pos[axis1] = position;
@@ -275,14 +265,13 @@ private class ListImplementor : Widget
 					break;
 				case Alignment.Fill:
 					pos[axis2] += layout.margin;
-					// targetSize[axis2] = fs[axis2] ? fs[axis2] : (containerSize[axis2] - layout.margin * 2);
 					targetSize[axis2] = containerSize[axis2] - layout.margin * 2;
 					break;
 			}
 
-			w.position(pos);
-			w.size(targetSize);
-			w.performLayout(nvg);
+			dataitem.position(pos);
+			dataitem.size(targetSize);
+			dataitem.performLayout(nvg);
 			position += targetSize[axis1];
 		}
 	}
