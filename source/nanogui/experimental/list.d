@@ -177,19 +177,18 @@ private class ListImplementor : Widget
 		assert(layout);
 		Vector2i size = Vector2i(2*layout.margin, 2*layout.margin);
 		int yOffset = 0;
-		auto widget = this;
-		auto window = cast(Window) widget;
+		auto window = cast(Window) this;
 		if (window && window.title().length) {
 			if (layout.orientation == Orientation.Vertical)
-				size[1] += widget.theme.mWindowHeaderHeight - layout.margin/2;
+				size[1] += theme.mWindowHeaderHeight - layout.margin/2;
 			else
-				yOffset = widget.theme.mWindowHeaderHeight;
+				yOffset = theme.mWindowHeaderHeight;
 		}
 
 		bool first = true;
 		int axis1 = cast(int) layout.orientation;
 		int axis2 = (cast(int) layout.orientation + 1)%2;
-		foreach (w; widget.data)
+		foreach (w; data)
 		{
 			if (!w.visible)
 				continue;
