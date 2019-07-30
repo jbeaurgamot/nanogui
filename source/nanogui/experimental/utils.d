@@ -14,7 +14,7 @@ struct Context
 	{
 		nvg = c;
 		algn.left = true;
-		algn.middle = true;
+		algn.top = true;
 	}
 
 	NVGTextAlign algn;
