@@ -65,7 +65,7 @@ private struct ListImplementor
 		static size_t shift;
 		if (_scroll_position != scroll_position)
 		{
-			shift = heightToItemIndex(scroll_position, scroll_position + size_y, _layout.spacing, _start_item, _finish_item);
+			shift = heightToItemIndex(_data, scroll_position, scroll_position + size_y, _layout.spacing, _start_item, _finish_item);
 			_scroll_position = scroll_position;
 		}
 
@@ -85,12 +85,6 @@ private struct ListImplementor
 			ctx.position.y += cast(int) _layout.spacing;
 		}
 		nvg.restore;
-	}
-
-	/// Convert given range of List height to corresponding items indices
-	private auto heightToItemIndex(double start, double finish, double spacing, ref size_t start_index, ref size_t last_index)
-	{
-		return .heightToItemIndex(_data, start, finish, spacing, start_index, last_index);
 	}
 
 	/// Convert given range of items indices to to corresponding List height range
@@ -200,7 +194,7 @@ private struct ListImplementor
 		import std.stdio;
 		writeln(__PRETTY_FUNCTION__, " ", p, " ", p.x, ", ", p.y + _scroll_position);
 		size_t s, f;
-		heightToItemIndex(p.y + _scroll_position, p.y + _scroll_position + 1, _layout.spacing, s, f);
+		heightToItemIndex(_data, p.y + _scroll_position, p.y + _scroll_position + 1, _layout.spacing, s, f);
 		import std.stdio;
 		writeln(s, " ", f);
 		return false;
