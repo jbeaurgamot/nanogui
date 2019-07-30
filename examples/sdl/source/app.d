@@ -302,8 +302,16 @@ class MyGui : SdlBackend
 			window.fixedSize(Vector2i(width, height));
 			window.layout(new BoxLayout(Orientation.Vertical));
 
+			string[] data;
+			data.reserve(400_000);
+			foreach(i; 0..400_000)
+			{
+				import std.conv : text;
+				data ~= text("item", i);
+			}
+
 			import nanogui.experimental.list;
-			auto list = new List(window);
+			auto list = new List(window, data);
 			list.setId = "list";
 			list.fixedSize(Vector2i(width, height - window.theme.mWindowHeaderHeight));
 		}

@@ -19,17 +19,18 @@ private class IListImplementor
 	abstract void     draw(NVGContext nvg);
 }
 
-private class ListImplementor : IListImplementor
+private class ListImplementor(T) : IListImplementor
 {
+	import std.range : isRandomAccessRange;
 	import nanogui.layout : BoxLayout;
 
 	private
 	{
-		DataItem!string[] _data;
-		BoxLayout         _layout;
-		Vector2i          _size;
-		Vector2i          _pos;
-		List              _parent;
+		DataItem!T[] _data;
+		BoxLayout    _layout;
+		Vector2i     _size;
+		Vector2i     _pos;
+		List         _parent;
 
 		static int _last_id;
 		int        _id;
@@ -41,7 +42,7 @@ private class ListImplementor : IListImplementor
 
 	@disable this();
 
-	this(List p)
+	this(R)(List p, R data) if (isRandomAccessRange!R)
 	{
 		import std.exception : enforce;
 
@@ -50,15 +51,8 @@ private class ListImplementor : IListImplementor
 		_id = ++_id;
 		_parent = p;
 
-		_data.reserve(400_000);
-		foreach(i; 0..400_000)
-		{
-			{
-				import std.conv : text;
-				import std.random : uniform;
-				_data ~= DataItem!string(text("item", i), Vector2i(80, 30 + uniform(0, 30)));
-			}
-		}
+		import std.array : array;
+		_data = data.array;
 		_scroll_position = _scroll_position.max;
 	}
 
@@ -236,15 +230,26 @@ private class ListImplementor : IListImplementor
 
 class List : Widget
 {
+	import std.range : isRandomAccessRange, ElementType;
 public:
 
-	this(Widget parent)
+	this(R)(Widget parent, R range) if (isRandomAccessRange!R)
 	{
 		super(parent);
 		mChildPreferredHeight = 0;
 		mScroll = 0.0f;
 		mUpdateLayout = false;
-		list_implementor = new ListImplementor(this);
+
+		alias T = ElementType!R;
+		DataItem!T[] data;
+		data.reserve(range.length);
+		foreach(e; range)
+		{
+			import std.random : uniform;
+			data ~= DataItem!T(e, Vector2i(80, 30 + uniform(0, 30)));
+		}
+
+		list_implementor = new ListImplementor!string(this, data);
 		list_implementor.size = Vector2i(width, height);
 
 		import nanogui.layout : BoxLayout, Orientation;
