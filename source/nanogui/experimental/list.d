@@ -6,7 +6,7 @@ import nanogui.widget;
 import nanogui.common : MouseButton, Vector2f, Vector2i, NVGContext;
 import nanogui.experimental.utils : DataItem;
 
-private struct ListImplementor
+private class ListImplementor
 {
 	import nanogui.layout : BoxLayout;
 
@@ -211,7 +211,7 @@ public:
 		mChildPreferredHeight = 0;
 		mScroll = 0.0f;
 		mUpdateLayout = false;
-		list_implementor = ListImplementor(this);
+		list_implementor = new ListImplementor(this);
 		list_implementor._size = Vector2i(width, height);
 
 		import nanogui.layout : BoxLayout, Orientation;
@@ -230,6 +230,9 @@ public:
 	override void performLayout(NVGContext nvg)
 	{
 		super.performLayout(nvg);
+
+		if (list_implementor is null)
+			return;
 
 		mChildPreferredHeight = list_implementor.preferredSize(nvg).y;
 
@@ -250,12 +253,14 @@ public:
 
 	override Vector2i preferredSize(NVGContext nvg) const
 	{
+		if (list_implementor is null)
+			return Vector2i(0, 0);
 		return list_implementor.preferredSize(nvg) + Vector2i(12, 0);
 	}
 	
 	override bool mouseDragEvent(Vector2i p, Vector2i rel, MouseButton button, int modifiers)
 	{
-		if (mChildPreferredHeight > mSize.y)
+		if (list_implementor !is null && mChildPreferredHeight > mSize.y)
 		{
 			float scrollh = height * min(1.0f, height / cast(float)mChildPreferredHeight);
 
@@ -272,7 +277,7 @@ public:
 
 	override bool scrollEvent(Vector2i p, Vector2f rel)
 	{
-		if (mChildPreferredHeight > mSize.y)
+		if (list_implementor !is null && mChildPreferredHeight > mSize.y)
 		{
 			const scrollAmount = rel.y * 10;
 			mScroll = max(0.0f, min(1.0f, mScroll - scrollAmount/cast(typeof(mScroll))mChildPreferredHeight));
@@ -296,7 +301,7 @@ public:
 			return false;
 
 		const l = mScroll * height;
-		if (mChildPreferredHeight > mSize.y)
+		if (list_implementor !is null && mChildPreferredHeight > mSize.y)
 		{
 			float s, f;
 			with (list_implementor)
@@ -314,6 +319,8 @@ public:
 
 	override void draw(NVGContext nvg)
 	{
+		if (list_implementor is null)
+			return;
 		auto y = cast(int) (-mScroll*(mChildPreferredHeight - mSize.y));
 		list_implementor._pos = Vector2i(0, y);
 		mChildPreferredHeight = list_implementor.preferredSize(nvg).y;
