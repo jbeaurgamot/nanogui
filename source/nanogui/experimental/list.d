@@ -6,7 +6,20 @@ import nanogui.widget;
 import nanogui.common : MouseButton, Vector2f, Vector2i, NVGContext;
 import nanogui.experimental.utils : DataItem;
 
-private class ListImplementor
+private class IListImplementor
+{
+	import nanogui.layout : BoxLayout;
+
+	abstract void     size(Vector2i v);
+	abstract void     position(Vector2i v);
+	abstract void     layout(BoxLayout l);
+	abstract Vector2i preferredSize(NVGContext nvg) const;
+	abstract void     performLayout(NVGContext nvg);
+	abstract void     currentItemIndicesToHeight(ref float start, ref float finish);
+	abstract void     draw(NVGContext nvg);
+}
+
+private class ListImplementor : IListImplementor
 {
 	import nanogui.layout : BoxLayout;
 
@@ -49,8 +62,23 @@ private class ListImplementor
 		_scroll_position = _scroll_position.max;
 	}
 
+	override void size(Vector2i v)
+	{
+		_size = v;
+	}
+
+	override void position(Vector2i v)
+	{
+		_pos = v;
+	}
+
+	override void layout(BoxLayout l)
+	{
+		_layout = l;
+	}
+
 	/// Draw the widget (and all child widgets)
-	void draw(NVGContext nvg)
+	override void draw(NVGContext nvg)
 	{
 		int fontSize = _parent.theme.mButtonFontSize;
 		nvg.fontSize(fontSize);
@@ -133,8 +161,13 @@ private class ListImplementor
 			finish = curr + spacing;
 	}
 
+	override void currentItemIndicesToHeight(ref float start, ref float finish)
+	{
+		return itemIndexToHeight(_start_item, _finish_item, start, finish);
+	}
+
 	/// Compute the preferred size of the widget
-	Vector2i preferredSize(NVGContext nvg) const
+	override Vector2i preferredSize(NVGContext nvg) const
 	{
 		static Vector2i[int] size_inited;
 
@@ -168,7 +201,7 @@ private class ListImplementor
 	}
 
 	/// Invoke the associated layout generator to properly place child widgets, if any
-	void performLayout(NVGContext nvg)
+	override void performLayout(NVGContext nvg)
 	{
 		foreach(ref dataitem; _data)
 		{
@@ -212,15 +245,14 @@ public:
 		mScroll = 0.0f;
 		mUpdateLayout = false;
 		list_implementor = new ListImplementor(this);
-		list_implementor._size = Vector2i(width, height);
+		list_implementor.size = Vector2i(width, height);
 
 		import nanogui.layout : BoxLayout, Orientation;
-		list_implementor._layout = new BoxLayout(Orientation.Vertical);
-		list_implementor._layout.setMargin = 40;
-		list_implementor._layout.setSpacing = 20;
+		auto layout = new BoxLayout(Orientation.Vertical);
+		layout.setMargin = 40;
+		layout.setSpacing = 20;
+		list_implementor.layout = layout;
 	}
-
-	private ListImplementor list_implementor;
 
 	/// Return the current scroll amount as a value between 0 and 1. 0 means scrolled to the top and 1 to the bottom.
 	float scroll() const { return mScroll; }
@@ -239,13 +271,13 @@ public:
 		if (mChildPreferredHeight > mSize.y)
 		{
 			auto y = cast(int) (-mScroll*(mChildPreferredHeight - mSize.y));
-			list_implementor._pos = Vector2i(0, y);
-			list_implementor._size = Vector2i(mSize.x-12, mChildPreferredHeight);
+			list_implementor.position = Vector2i(0, y);
+			list_implementor.size = Vector2i(mSize.x-12, mChildPreferredHeight);
 		}
 		else 
 		{
-			list_implementor._pos = Vector2i(0, 0);
-			list_implementor._size = mSize;
+			list_implementor.position = Vector2i(0, 0);
+			list_implementor.size = mSize;
 			mScroll = 0;
 		}
 		list_implementor.performLayout(nvg);
@@ -304,10 +336,7 @@ public:
 		if (list_implementor !is null && mChildPreferredHeight > mSize.y)
 		{
 			float s, f;
-			with (list_implementor)
-			{
-				itemIndexToHeight(_start_item, _finish_item, s, f);
-			}
+			list_implementor.currentItemIndicesToHeight(s, f);
 			const scrollAmount = l > p.y ? (f - s) : -(f - s);
 
 			mScroll = max(0.0f, min(1.0f, mScroll - scrollAmount/cast(float)mChildPreferredHeight));
@@ -322,7 +351,7 @@ public:
 		if (list_implementor is null)
 			return;
 		auto y = cast(int) (-mScroll*(mChildPreferredHeight - mSize.y));
-		list_implementor._pos = Vector2i(0, y);
+		list_implementor.position = Vector2i(0, y);
 		mChildPreferredHeight = list_implementor.preferredSize(nvg).y;
 		float scrollh = max(16, height *
 			min(1.0f, height / cast(float) mChildPreferredHeight));
@@ -370,6 +399,7 @@ protected:
 	int mChildPreferredHeight;
 	float mScroll;
 	bool mUpdateLayout;
+	IListImplementor list_implementor;
 }
 
 /// Convert given range of List height to corresponding items indices
