@@ -87,7 +87,7 @@ private class ListImplementor(T) : IListImplementor
 		static size_t shift;
 		if (_scroll_position != scroll_position)
 		{
-			shift = heightToItemIndex(_data, scroll_position, size_y, _layout.spacing, _start_item, _finish_item);
+			shift = heightToItemIndex(_data, scroll_position, size_y, _layout.spacing, _start_item, _finish_item, shift);
 			_scroll_position = scroll_position;
 		}
 
@@ -218,12 +218,6 @@ private class ListImplementor(T) : IListImplementor
 		// }
 		// if (button == MouseButton.Left && down && !mFocused)
 		// 	requestFocus();
-		import std.stdio;
-		writeln(__PRETTY_FUNCTION__, " ", p, " ", p.x, ", ", p.y + _scroll_position);
-		size_t s, f;
-		heightToItemIndex(_data, p.y + _scroll_position, 1, _layout.spacing, s, f);
-		import std.stdio;
-		writeln(s, " ", f);
 		return false;
 	}
 }
@@ -408,27 +402,43 @@ protected:
 }
 
 /// Convert given range of List height to corresponding items indices
-private auto heightToItemIndex(R)(R data, double start, double delta, double spacing, ref size_t start_index, ref size_t last_index)
+private auto heightToItemIndex(R)(R data, double start, double delta, double spacing, ref size_t start_index, ref size_t last_index, double old_start)
 {
-	double curr = 0;
-	size_t idx, result;
+	double curr = old_start;
+	size_t idx = start_index, result;
 	assert(delta >= 0);
-	start_index = 0;
-	last_index = 0;
 
-	if (start + delta < curr)
-		return result;
-
-	foreach(ref const e; data)
+	if (old_start > start)
 	{
-		curr += e.size.y + spacing;
-		if (curr >= start)
+		if (start + delta > curr)
+			return result;
+		foreach_reverse(ref const e; data[0..start_index])
 		{
-			result = cast(size_t)(curr-e.size.y - spacing);
-			start_index = idx;
-			break;
+			curr -= e.size.y + spacing;
+			if (curr <= start)
+			{
+				result = cast(size_t)(curr + e.size.y + spacing);
+				start_index = idx;
+				break;
+			}
+			idx--;
 		}
-		idx++;
+	}
+	else
+	{
+		if (start + delta < curr)
+			return result;
+		foreach(ref const e; data[start_index..$])
+		{
+			curr += e.size.y + spacing;
+			if (curr >= start)
+			{
+				result = cast(size_t)(curr-e.size.y - spacing);
+				start_index = idx;
+				break;
+			}
+			idx++;
+		}
 	}
 
 	if (idx == data.length)
