@@ -87,7 +87,7 @@ private class ListImplementor(T) : IListImplementor
 		static size_t shift;
 		if (_scroll_position != scroll_position)
 		{
-			shift = heightToItemIndex(_data, scroll_position, scroll_position + size_y, _layout.spacing, _start_item, _finish_item);
+			shift = heightToItemIndex(_data, scroll_position, size_y, _layout.spacing, _start_item, _finish_item);
 			_scroll_position = scroll_position;
 		}
 
@@ -221,7 +221,7 @@ private class ListImplementor(T) : IListImplementor
 		import std.stdio;
 		writeln(__PRETTY_FUNCTION__, " ", p, " ", p.x, ", ", p.y + _scroll_position);
 		size_t s, f;
-		heightToItemIndex(_data, p.y + _scroll_position, p.y + _scroll_position + 1, _layout.spacing, s, f);
+		heightToItemIndex(_data, p.y + _scroll_position, 1, _layout.spacing, s, f);
 		import std.stdio;
 		writeln(s, " ", f);
 		return false;
@@ -408,15 +408,15 @@ protected:
 }
 
 /// Convert given range of List height to corresponding items indices
-private auto heightToItemIndex(R)(R data, double start, double finish, double spacing, ref size_t start_index, ref size_t last_index)
+private auto heightToItemIndex(R)(R data, double start, double delta, double spacing, ref size_t start_index, ref size_t last_index)
 {
 	double curr = 0;
 	size_t idx, result;
-	assert(start < finish);
+	assert(delta >= 0);
 	start_index = 0;
 	last_index = 0;
 
-	if (finish < curr)
+	if (start + delta < curr)
 		return result;
 
 	foreach(ref const e; data)
@@ -442,7 +442,7 @@ private auto heightToItemIndex(R)(R data, double start, double finish, double sp
 	foreach(ref const e; data[low_boundary..$])
 	{
 		curr += e.size.y + spacing;
-		if (curr >= finish)
+		if (curr >= start + delta)
 		{
 			last_index = idx+1;
 			break;
