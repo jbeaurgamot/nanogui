@@ -79,7 +79,6 @@ private class ListImplementor(T) : IListImplementor
 		nvg.fontFace("sans-bold");
 
 		nvg.save;
-		nvg.translate(_pos.x, _pos.y);
 
 		int size_y = (_parent.fixedSize.y) ? _parent.fixedSize.y : _parent.size.y;
 		assert(_size.y >= _parent.size.y);
@@ -94,7 +93,8 @@ private class ListImplementor(T) : IListImplementor
 		import nanogui.experimental.utils : Context;
 		auto ctx = Context(nvg);
 
-		ctx.position.y = cast(int) shift;
+		ctx.position.x = _pos.x;
+		ctx.position.y = cast(int) shift + _pos.y;
 
 		import std.algorithm : min;
 		foreach(child; _data[_start_item..min(_finish_item, $)])
