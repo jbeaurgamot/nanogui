@@ -404,64 +404,77 @@ protected:
 /// Convert given range of List height to corresponding items indices
 private auto heightToItemIndex(R)(R data, double start, double delta, double spacing, ref size_t start_index, ref size_t last_index, double old_start)
 {
-	double curr = old_start;
+	double e0 = old_start;
+	const N = data.length;
 	size_t idx = start_index, result;
 	assert(delta >= 0);
 
-	if (old_start > start)
+	if (e0 > start)
 	{
-		if (start + delta > curr)
-			return result;
-		foreach_reverse(ref const e; data[0..start_index])
+		assert(0 <= idx && idx < N);
+		for(; idx > 0; idx--)
 		{
-			curr -= e.size.y + spacing;
-			if (curr <= start)
+			if (e0 - data[idx-1].size.y - spacing <= start &&
+				e0 > start)
 			{
-				result = cast(size_t)(curr + e.size.y + spacing);
-				start_index = idx;
+				start_index = idx-1;
+				e0 -= data[idx-1].size.y + spacing;
 				break;
 			}
-			idx--;
+			else
+			{
+				e0 -= data[idx-1].size.y + spacing;
+			}
 		}
 	}
 	else
 	{
-		if (start + delta < curr)
-			return result;
-		foreach(ref const e; data[start_index..$])
+		idx = start_index;
+		for(; idx < N; idx++)
 		{
-			curr += e.size.y + spacing;
-			if (curr >= start)
+			if (e0 <= start && e0 + data[idx].size.y + spacing > start)
 			{
-				result = cast(size_t)(curr-e.size.y - spacing);
 				start_index = idx;
 				break;
 			}
-			idx++;
+			else
+			{
+				e0 += data[idx].size.y + spacing;
+			}
 		}
+		assert(0 <= idx);
+		assert(idx <= N);
+		assert(
+			(e0 <= start && (e0 + data[idx].size.y + spacing) > start) || 
+			(idx == N /*&& e0 == E*/)
+		);
 	}
 
-	if (idx == data.length)
+	if (idx == N)
 	{
-		start_index = data.length;
-		last_index = start_index + 1;
-		return result; // start (and finish too) is beyond the last index
+		// assert(e0 == E);
+		start_index = N - 1;
+		last_index = N;
+		return cast(size_t) e0; // start (and finish too) is beyond the last index
 	}
 
-	const low_boundary = ++idx;
-	foreach(ref const e; data[low_boundary..$])
+	auto e1 = e0;
+	last_index = 0;
+
+	for(; idx < N; idx++)
 	{
-		curr += e.size.y + spacing;
-		if (curr >= start + delta)
+		if (e1 > start + delta)
 		{
-			last_index = idx+1;
+			last_index = idx + 1;
 			break;
 		}
-		idx++;
+		else
+			e1 += data[idx].size.y + spacing;
 	}
 
 	if (idx == data.length)
 		last_index = idx; // start is before and finish is beyond the last index
 
-	return result;
+	last_index = start_index + 10;
+	return cast(size_t) e0;
 }
