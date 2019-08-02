@@ -402,11 +402,10 @@ protected:
 }
 
 /// Convert given range of List height to corresponding items indices
-private auto heightToItemIndex(R)(R data, double start, double delta, double spacing, ref size_t start_index, ref size_t last_index, double old_start)
+private auto heightToItemIndex(R)(R data, double start, double delta, double spacing, ref size_t start_index, ref size_t last_index, double e0)
 {
-	double e0 = old_start;
 	const N = data.length;
-	size_t idx = start_index, result;
+	size_t idx = start_index;
 	assert(delta >= 0);
 
 	if (e0 > start)
@@ -475,6 +474,5 @@ private auto heightToItemIndex(R)(R data, double start, double delta, double spa
 	if (idx == data.length)
 		last_index = idx; // start is before and finish is beyond the last index
 
-	last_index = start_index + 10;
 	return cast(size_t) e0;
 }
