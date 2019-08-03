@@ -19,7 +19,7 @@ import nanogui.entypo;
 class Theme
 {
 public:
-	this(NanoContext nvg)
+	this(NanoContext ctx)
 	{
 		mStandardFontSize                 = 16;
 		mButtonFontSize                   = 20;
@@ -84,11 +84,11 @@ public:
 
 		import arsd.nanovega : createFontMem;
 		import nanogui.resources;
-		mFontNormal = nvg.createFontMem("sans", roboto_regular_ttf.ptr,
+		mFontNormal = ctx.createFontMem("sans", roboto_regular_ttf.ptr,
 									   cast(int) roboto_regular_ttf.length, 0);
-		mFontBold = nvg.createFontMem("sans-bold", roboto_bold_ttf.ptr,
+		mFontBold = ctx.createFontMem("sans-bold", roboto_bold_ttf.ptr,
 									 cast(int) roboto_bold_ttf.length, 0);
-		mFontIcons = nvg.createFontMem("icons", entypo_ttf.ptr,
+		mFontIcons = ctx.createFontMem("icons", entypo_ttf.ptr,
 									  cast(int) entypo_ttf.length, 0);
 		if (mFontNormal == -1 || mFontBold == -1 || mFontIcons == -1)
 		{

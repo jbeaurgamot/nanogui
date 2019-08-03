@@ -123,32 +123,32 @@ public:
 	}
 
 	/// The preferred size of this TreeView.
-	override Vector2i preferredSize(NanoContext nvg) const
+	override Vector2i preferredSize(NanoContext ctx) const
 	{
 		if (mFixedSize != Vector2i())
 			return mFixedSize;
-		nvg.fontSize(fontSize());
-		nvg.fontFace("sans");
+		ctx.fontSize(fontSize());
+		ctx.fontFace("sans");
 		float[4] bounds;
 		const extra = mChecked ? (fontSize() * 1.3f * items.length) : 0;
 		return cast(Vector2i) Vector2f(
-			(nvg.textBounds(0, 0, mCaption, bounds[]) +
+			(ctx.textBounds(0, 0, mCaption, bounds[]) +
 				1.8f * fontSize()),
 			fontSize() * 1.3f + extra);
 	}
 
 	/// Draws this TreeView.
-	override void draw(NanoContext nvg)
+	override void draw(NanoContext ctx)
 	{
-		super.draw(nvg);
+		super.draw(ctx);
 
-		nvg.fontSize(fontSize);
-		nvg.fontFace("sans");
-		nvg.fillColor(mEnabled ? mTheme.mTextColor : mTheme.mDisabledTextColor);
+		ctx.fontSize(fontSize);
+		ctx.fontFace("sans");
+		ctx.fillColor(mEnabled ? mTheme.mTextColor : mTheme.mDisabledTextColor);
 		NVGTextAlign algn;
 		algn.left = true;
 		algn.middle = true;
-		nvg.textAlign(algn);
+		ctx.textAlign(algn);
 		Vector2i titleSize;
 		if (mChecked)
 		{
@@ -157,31 +157,31 @@ public:
 		}
 		else
 			titleSize = mSize;
-		nvg.text(mPos.x + 1.6f * fontSize, mPos.y + titleSize.y * 0.5f,
+		ctx.text(mPos.x + 1.6f * fontSize, mPos.y + titleSize.y * 0.5f,
 				mCaption);
 
-		NVGPaint bg = nvg.boxGradient(mPos.x + 1.5f, mPos.y + 1.5f,
+		NVGPaint bg = ctx.boxGradient(mPos.x + 1.5f, mPos.y + 1.5f,
 									 titleSize.y - 2.0f, titleSize.y - 2.0f, 3, 3,
 									 mPushed ? Color(0, 0, 0, 100) : Color(0, 0, 0, 32),
 									 Color(0, 0, 0, 180));
 
-		nvg.beginPath;
-		nvg.roundedRect(mPos.x + 1.0f, mPos.y + 1.0f, titleSize.y - 2.0f,
+		ctx.beginPath;
+		ctx.roundedRect(mPos.x + 1.0f, mPos.y + 1.0f, titleSize.y - 2.0f,
 					   titleSize.y - 2.0f, 3);
-		nvg.fillPaint(bg);
-		nvg.fill;
+		ctx.fillPaint(bg);
+		ctx.fill;
 
-		nvg.fontSize(titleSize.y * icon_scale());
-		nvg.fontFace("icons");
-		nvg.fillColor(mEnabled ? mTheme.mIconColor
+		ctx.fontSize(titleSize.y * icon_scale());
+		ctx.fontFace("icons");
+		ctx.fillColor(mEnabled ? mTheme.mIconColor
 									: mTheme.mDisabledTextColor);
 		algn = NVGTextAlign();
 		algn.center = true;
 		algn.middle = true;
-		nvg.textAlign(algn);
+		ctx.textAlign(algn);
 
 		import nanogui.entypo : Entypo;
-		nvg.text(mPos.x + titleSize.y * 0.5f + 1,
+		ctx.text(mPos.x + titleSize.y * 0.5f + 1,
 				mPos.y + titleSize.y * 0.5f, 
 				[mChecked ? cast(dchar)Entypo.ICON_CHEVRON_DOWN :
 							cast(dchar)Entypo.ICON_CHEVRON_RIGHT
@@ -189,13 +189,11 @@ public:
 
 		if (mChecked)
 		{
-			nvg.fontSize(fontSize);
-			nvg.fontFace("sans");
+			ctx.fontSize(fontSize);
+			ctx.fontFace("sans");
 			algn.left = true;
 			algn.middle = true;
-			nvg.textAlign(algn);
-			import nanogui.experimental.utils : Context;
-			auto ctx = Context(nvg);
+			ctx.textAlign(algn);
 			ctx.position.x = 20;
 			ctx.position.y = 60;
 			foreach(item; items)

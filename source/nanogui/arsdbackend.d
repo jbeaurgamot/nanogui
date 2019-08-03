@@ -62,21 +62,21 @@ class ArsdBackend
 		// note that we cannot do that *after* our window was closed,
 		// as we need alive OpenGL context to do proper cleanup.
 		simple_window.onClosing = delegate () {
-			nvg.kill;
+			ctx.kill;
 		};
 
-		nvg = NanoContext(NVGContextFlag.None);
+		ctx = NanoContext(NVGContextFlag.None);
 
 		simple_window.visibleForTheFirstTime = () {
-			enforce(nvg !is null, "cannot initialize NanoGui");
+			enforce(ctx !is null, "cannot initialize NanoGui");
 
 			screen = new ArsdScreen(simple_window.width, simple_window.height, Clock.currTime.stdTime);
-			screen.theme = new Theme(nvg);
+			screen.theme = new Theme(ctx);
 
 			// this callback will be called when we will need to repaint our window
 			simple_window.redrawOpenGlScene = () {
 				screen.size = Vector2i(simple_window.width, simple_window.height);
-				screen.draw(nvg);
+				screen.draw(ctx);
 			};
 
 			screen.mCursorSet[Cursor.Arrow]     = GenericCursor.Default;
@@ -182,7 +182,7 @@ class ArsdBackend
 	abstract void onVisibleForTheFirstTime();
 
 protected:
-	NanoContext nvg;
+	NanoContext ctx;
 	SimpleWindow simple_window;
 	ArsdScreen screen;
 }

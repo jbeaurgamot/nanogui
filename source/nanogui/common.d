@@ -15,7 +15,12 @@ struct NanoContext
 	this(NVGContextFlag flag)
 	{
 		nvg = nvgCreateContext(flag);
+		algn.left = true;
+		algn.top = true;
 	}
+
+	NVGTextAlign algn;
+	Vector2i position;
 }
 
 alias Vector2i = vec2i;
