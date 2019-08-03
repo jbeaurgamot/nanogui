@@ -123,7 +123,7 @@ public:
 	}
 
 	/// The preferred size of this TreeView.
-	override Vector2i preferredSize(NVGContext nvg) const
+	override Vector2i preferredSize(NanoContext nvg) const
 	{
 		if (mFixedSize != Vector2i())
 			return mFixedSize;
@@ -138,7 +138,7 @@ public:
 	}
 
 	/// Draws this TreeView.
-	override void draw(NVGContext nvg)
+	override void draw(NanoContext nvg)
 	{
 		super.draw(nvg);
 

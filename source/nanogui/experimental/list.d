@@ -3,7 +3,7 @@ module nanogui.experimental.list;
 
 import std.algorithm : min, max;
 import nanogui.widget;
-import nanogui.common : MouseButton, Vector2f, Vector2i, NVGContext;
+import nanogui.common : MouseButton, Vector2f, Vector2i, NanoContext;
 import nanogui.experimental.utils : DataItem;
 
 private class IListImplementor
@@ -13,10 +13,10 @@ private class IListImplementor
 	abstract void     size(Vector2i v);
 	abstract void     position(Vector2i v);
 	abstract void     layout(BoxLayout l);
-	abstract Vector2i preferredSize(NVGContext nvg) const;
-	abstract void     performLayout(NVGContext nvg);
+	abstract Vector2i preferredSize(NanoContext nvg) const;
+	abstract void     performLayout(NanoContext nvg);
 	abstract void     currentItemIndicesToHeight(ref float start, ref float finish);
-	abstract void     draw(NVGContext nvg);
+	abstract void     draw(NanoContext nvg);
 }
 
 private class ListImplementor(T) : IListImplementor
@@ -73,7 +73,7 @@ private class ListImplementor(T) : IListImplementor
 	}
 
 	/// Draw the widget (and all child widgets)
-	override void draw(NVGContext nvg)
+	override void draw(NanoContext nvg)
 	{
 		int fontSize = _parent.theme.mButtonFontSize;
 		nvg.fontSize(fontSize);
@@ -161,7 +161,7 @@ private class ListImplementor(T) : IListImplementor
 	}
 
 	/// Compute the preferred size of the widget
-	override Vector2i preferredSize(NVGContext nvg) const
+	override Vector2i preferredSize(NanoContext nvg) const
 	{
 		static Vector2i[int] size_inited;
 
@@ -195,7 +195,7 @@ private class ListImplementor(T) : IListImplementor
 	}
 
 	/// Invoke the associated layout generator to properly place child widgets, if any
-	override void performLayout(NVGContext nvg)
+	override void performLayout(NanoContext nvg)
 	{
 		foreach(ref dataitem; _data)
 		{
@@ -258,7 +258,7 @@ public:
 	/// Set the scroll amount to a value between 0 and 1. 0 means scrolled to the top and 1 to the bottom.
 	void setScroll(float scroll) { mScroll = scroll; }
 
-	override void performLayout(NVGContext nvg)
+	override void performLayout(NanoContext nvg)
 	{
 		super.performLayout(nvg);
 
@@ -282,7 +282,7 @@ public:
 		list_implementor.performLayout(nvg);
 	}
 
-	override Vector2i preferredSize(NVGContext nvg) const
+	override Vector2i preferredSize(NanoContext nvg) const
 	{
 		if (list_implementor is null)
 			return Vector2i(0, 0);
@@ -345,7 +345,7 @@ public:
 		return false;
 	}
 
-	override void draw(NVGContext nvg)
+	override void draw(NanoContext nvg)
 	{
 		if (list_implementor is null)
 			return;

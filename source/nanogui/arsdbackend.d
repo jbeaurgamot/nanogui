@@ -9,7 +9,7 @@ import arsd.nanovega;
 
 import nanogui.screen : Screen;
 import nanogui.theme : Theme;
-import nanogui.common : Vector2i, Cursor;
+import nanogui.common : Vector2i, Cursor, NanoContext;
 
 // Unfortunately ArsdBackend cannot inherit Screen directly
 // because full initialization of simpledisplay occurs in
@@ -181,7 +181,7 @@ class ArsdBackend
 	abstract void onVisibleForTheFirstTime();
 
 protected:
-	NVGContext nvg;
+	NanoContext nvg;
 	SimpleWindow simple_window;
 	ArsdScreen screen;
 }

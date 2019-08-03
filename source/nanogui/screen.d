@@ -7,7 +7,7 @@ import arsd.nanovega;
 public import gfm.math : vec2i;
 
 import nanogui.widget : Widget;
-import nanogui.common : Vector2i, Vector2f, MouseButton, MouseAction, KeyAction, Cursor;
+import nanogui.common : Vector2i, Vector2f, MouseButton, MouseAction, KeyAction, Cursor, NanoContext;
 
 class Screen : Widget
 {
@@ -38,7 +38,7 @@ class Screen : Widget
 
 	auto lastInteraction() { return mLastInteraction; }
 
-	override void draw(NVGContext nvg)
+	override void draw(NanoContext nvg)
 	{
 		import arsd.simpledisplay;
 

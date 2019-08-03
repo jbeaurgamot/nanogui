@@ -10,7 +10,7 @@ module nanogui.theme;
 	BSD-style license that can be found in the LICENSE.txt file.
 */
 
-import nanogui.common : NVGContext, Color;
+import nanogui.common : NanoContext, Color;
 import nanogui.entypo;
 
 /**
@@ -19,7 +19,7 @@ import nanogui.entypo;
 class Theme
 {
 public:
-	this(NVGContext nvg)
+	this(NanoContext nvg)
 	{
 		mStandardFontSize                 = 16;
 		mButtonFontSize                   = 20;

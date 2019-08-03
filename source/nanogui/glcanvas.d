@@ -66,7 +66,7 @@ public:
     bool drawBorder() const { return mDrawBorder; }
 
     /// Draw the canvas.
-    override void draw(NVGContext nvg)
+    override void draw(NanoContext nvg)
 	{
 		Widget.draw(nvg);
 
@@ -119,7 +119,7 @@ public:
 
 protected:
     /// Internal helper function for drawing the widget border
-    void drawWidgetBorder(NVGContext nvg) const
+    void drawWidgetBorder(NanoContext nvg) const
 	{
 		// import arsd.nanovega;
 		nvg.beginPath;

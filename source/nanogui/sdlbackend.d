@@ -15,10 +15,10 @@ import gfm.opengl: OpenGL;
 import gfm.sdl2: SDL2, SDL2Window, SDL_Event, SDL_Cursor, SDL_SetCursor, 
 	SDL_FreeCursor, SDL_Delay;
 
-import arsd.nanovega : NVGContext, nvgCreateContext, kill, NVGContextFlag;
+import arsd.nanovega : nvgCreateContext, kill, NVGContextFlag;
 import nanogui.screen : Screen;
 import nanogui.theme : Theme;
-import nanogui.common : Vector2i, MouseButton, MouseAction, Cursor;
+import nanogui.common : NanoContext, Vector2i, MouseButton, MouseAction, Cursor;
 
 class SdlBackend : Screen
 {
@@ -311,7 +311,7 @@ protected:
 	OpenGL _gl;
 	SDL2 _sdl2;
 
-	NVGContext nvg;
+	NanoContext nvg;
 
 	SDL_Cursor*[6] mCursorSet;
 

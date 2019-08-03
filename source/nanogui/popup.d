@@ -13,7 +13,7 @@ module nanogui.popup;
 */
 
 import nanogui.window : Window;
-import nanogui.widget : Widget, NVGContext;
+import nanogui.widget : Widget, NanoContext;
 import nanogui.common : Vector2i;
 
 /**
@@ -58,7 +58,7 @@ public:
     final parentWindow() const { return mParentWindow; }
 
     /// Invoke the associated layout generator to properly place child widgets, if any
-    override void performLayout(NVGContext nvg)
+    override void performLayout(NanoContext nvg)
     {
         if (mLayout || mChildren.length != 1) {
             Widget.performLayout(nvg);
@@ -72,7 +72,7 @@ public:
     }
 
     /// Draw the popup window
-    override void draw(NVGContext nvg)
+    override void draw(NanoContext nvg)
     {
         import arsd.nanovega;
         import nanogui.common;

@@ -4,13 +4,13 @@ struct Context
 {
 	@disable this(this);
 
-	import arsd.nanovega : NVGContext, NVGTextAlign, textAlign, text;
-	import nanogui.common : Vector2i;
+	import arsd.nanovega : NVGTextAlign, textAlign, text;
+	import nanogui.common : Vector2i, NanoContext;
 
-	NVGContext nvg;
+	NanoContext nvg;
 	alias nvg this;
 
-	this(NVGContext c)
+	this(NanoContext c)
 	{
 		nvg = c;
 		algn.left = true;

@@ -148,7 +148,7 @@ public:
     final buttonGroup() { return mButtonGroup; }
 
     /// The preferred size of this Button.
-    override Vector2i preferredSize(NVGContext nvg) const
+    override Vector2i preferredSize(NanoContext nvg) const
     {
         int fontSize = mFontSize == -1 ? mTheme.mButtonFontSize : mFontSize;
         nvg.fontSize(fontSize);
@@ -246,7 +246,7 @@ public:
     }
 
     /// Responsible for drawing the Button.
-    override void draw(NVGContext nvg)
+    override void draw(NanoContext nvg)
     {
         super.draw(nvg);
 

@@ -58,7 +58,7 @@ public:
 	final void center();
 
 	/// Draw the window
-	override void draw(NVGContext nvg)
+	override void draw(NanoContext nvg)
 	{
 		assert (mTheme);
 		int ds = mTheme.mWindowDropShadowSize, cr = mTheme.mWindowCornerRadius;
@@ -183,7 +183,7 @@ public:
 	}
 
 	/// Compute the preferred size of the widget
-	override Vector2i preferredSize(NVGContext nvg) const
+	override Vector2i preferredSize(NanoContext nvg) const
 	{
 		Vector2i result = Widget.preferredSize(nvg, mButtonPanel);
 
@@ -200,7 +200,7 @@ public:
 		return result;
 	}
 	/// Invoke the associated layout generator to properly place child widgets, if any
-	override void performLayout(NVGContext nvg)
+	override void performLayout(NanoContext nvg)
 	{
 		if (!mButtonPanel) {
 			Widget.performLayout(nvg);

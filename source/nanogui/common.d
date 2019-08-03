@@ -2,7 +2,7 @@
 module nanogui.common;
 
 import gfm.math : vec2i, vec2f, vec3f, vec4f, vec4i;
-public import arsd.nanovega : NVGContext, NVGColor;
+public import arsd.nanovega : NanoContext = NVGContext, NVGColor, NVGPaint, NVGImage;
 public import arsd.nanovega;
 
 alias Vector2i = vec2i;
@@ -73,7 +73,7 @@ enum Cursor {
 
 /// Sets current fill style to a solid color.
 /// Group: render_styles
-public void fillColor (NVGContext ctx, Color color) nothrow @trusted @nogc {
+public void fillColor (NanoContext ctx, Color color) nothrow @trusted @nogc {
   NVGColor clr = void;
   clr.rgba = color[];
   clr.rgba[] /= 255f;
@@ -88,7 +88,7 @@ public void fillColor (NVGContext ctx, Color color) nothrow @trusted @nogc {
  *
  * Group: paints
  */
-public NVGPaint boxGradient (NVGContext ctx, in float x, in float y, in float w, in float h, in float r, in float f, Color icol, Color ocol) nothrow @trusted @nogc
+public NVGPaint boxGradient (NanoContext ctx, in float x, in float y, in float w, in float h, in float r, in float f, Color icol, Color ocol) nothrow @trusted @nogc
 {
 	NVGColor clr1 = void, clr2 = void;
 	clr1.rgba = icol[];
@@ -104,7 +104,7 @@ public NVGPaint boxGradient (NVGContext ctx, in float x, in float y, in float w,
  *
  * Group: paints
  */
-public NVGPaint linearGradient (NVGContext ctx, in float sx, in float sy, in float ex, in float ey, Color icol, Color ocol) nothrow @trusted @nogc
+public NVGPaint linearGradient (NanoContext ctx, in float sx, in float sy, in float ex, in float ey, Color icol, Color ocol) nothrow @trusted @nogc
 {
 	NVGColor clr1 = void, clr2 = void;
 	clr1.rgba = icol[];
@@ -120,7 +120,7 @@ public NVGPaint linearGradient (NVGContext ctx, in float sx, in float sy, in flo
  *
  * Group: paints
  */
-public NVGPaint radialGradient (NVGContext ctx, in float cx, in float cy, in float inr, in float outr, Color icol, Color ocol) nothrow @trusted @nogc {
+public NVGPaint radialGradient (NanoContext ctx, in float cx, in float cy, in float inr, in float outr, Color icol, Color ocol) nothrow @trusted @nogc {
 	NVGColor clr1 = void, clr2 = void;
 	clr1.rgba = icol[];
 	clr1.rgba[] /= 255f;
@@ -131,7 +131,7 @@ public NVGPaint radialGradient (NVGContext ctx, in float cx, in float cy, in flo
 
 /// Sets current stroke style to a solid color.
 /// Group: render_styles
-public void strokeColor (NVGContext ctx, Color color) nothrow @trusted @nogc
+public void strokeColor (NanoContext ctx, Color color) nothrow @trusted @nogc
 {
 	NVGColor clr = void;
 	clr.rgba = color[];

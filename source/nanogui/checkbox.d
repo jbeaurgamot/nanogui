@@ -115,7 +115,7 @@ public:
 	}
 
 	/// The preferred size of this CheckBox.
-	override Vector2i preferredSize(NVGContext nvg) const
+	override Vector2i preferredSize(NanoContext nvg) const
 	{
 		if (mFixedSize != Vector2i())
 			return mFixedSize;
@@ -129,7 +129,7 @@ public:
 	}
 
 	/// Draws this CheckBox.
-	override void draw(NVGContext nvg)
+	override void draw(NanoContext nvg)
 	{
 		super.draw(nvg);
 

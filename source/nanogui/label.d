@@ -57,7 +57,7 @@ public:
 	}
 
 	/// Compute the size needed to fully display the label
-	override Vector2i preferredSize(NVGContext nvg) const
+	override Vector2i preferredSize(NanoContext nvg) const
 	{
 		if (mCaption == "")
 			return Vector2i();
@@ -85,7 +85,7 @@ public:
 	}
 
 	/// Draw the label
-	override void draw(NVGContext nvg)
+	override void draw(NanoContext nvg)
 	{
 		Widget.draw(nvg);
 		nvg.fontFace(mFont);

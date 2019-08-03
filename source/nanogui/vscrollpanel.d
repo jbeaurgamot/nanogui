@@ -14,7 +14,7 @@ module nanogui.vscrollpanel;
 */
 import std.algorithm : min, max;
 import nanogui.widget;
-import nanogui.common : MouseButton, Vector2f, Vector2i, NVGContext;
+import nanogui.common : MouseButton, Vector2f, Vector2i, NanoContext;
 
 /**
  * Adds a vertical scrollbar around a widget that is too big to fit into
@@ -35,7 +35,7 @@ public:
     /// Set the scroll amount to a value between 0 and 1. 0 means scrolled to the top and 1 to the bottom.
     void setScroll(float scroll) { mScroll = scroll; }
 
-    override void performLayout(NVGContext nvg)
+    override void performLayout(NanoContext nvg)
     {
         super.performLayout(nvg);
 
@@ -62,7 +62,7 @@ public:
         child.performLayout(nvg);
     }
 
-    override Vector2i preferredSize(NVGContext nvg) const
+    override Vector2i preferredSize(NanoContext nvg) const
     {
         if (mChildren.empty)
             return Vector2i(0, 0);
@@ -101,7 +101,7 @@ public:
         }
     }
 
-    override void draw(NVGContext nvg)
+    override void draw(NanoContext nvg)
     {
         if (mChildren.empty)
             return;

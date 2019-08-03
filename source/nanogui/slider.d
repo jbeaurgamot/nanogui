@@ -113,7 +113,7 @@ public:
 		mPreferredWidth = width;
 	}
 
-	override Vector2i preferredSize(NVGContext ctx) const
+	override Vector2i preferredSize(NanoContext ctx) const
 	{
 		return Vector2i(mPreferredWidth, 16);
 	}
@@ -170,7 +170,7 @@ public:
 		return true;
 	}
 
-	override void draw(NVGContext nvg)
+	override void draw(NanoContext nvg)
 	{
 		Vector2f center = cast(Vector2f) mPos + 0.5f * cast(Vector2f) mSize;
 		float kr = cast(int) (mSize.y * 0.4f);

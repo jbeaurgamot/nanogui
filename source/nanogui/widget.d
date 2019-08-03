@@ -394,7 +394,7 @@ public:
 	}
 
 	/// Compute the preferred size of the widget
-	Vector2i preferredSize(NVGContext nvg) const
+	Vector2i preferredSize(NanoContext nvg) const
 	{
 		if (mLayout)
 			return mLayout.preferredSize(nvg, this);
@@ -404,7 +404,7 @@ public:
 
 	/// Compute the preferred size of the widget considering its child except
 	/// skipped one (for example button panel of window)
-	final Vector2i preferredSize(NVGContext nvg, const Widget skipped) const
+	final Vector2i preferredSize(NanoContext nvg, const Widget skipped) const
 	{
 		if (mLayout)
 			return mLayout.preferredSize(nvg, this, skipped);
@@ -413,7 +413,7 @@ public:
 	}
 
 	/// Invoke the associated layout generator to properly place child widgets, if any
-	void performLayout(NVGContext nvg)
+	void performLayout(NanoContext nvg)
 	{
 		if (mLayout) {
 			mLayout.performLayout(nvg, this);
@@ -430,7 +430,7 @@ public:
 	}
 
 	/// Draw the widget (and all child widgets)
-	void draw(NVGContext nvg)
+	void draw(NanoContext nvg)
 	{
 		version(NANOGUI_SHOW_WIDGET_BOUNDS)
 		{
@@ -529,7 +529,7 @@ protected:
 	 *
 	 * ---
 	 *
-	 *       void draw(NVGContext nvg)
+	 *       void draw(NanoContext nvg)
 	 *       {
 	 *           // fontSize depends on the kind of `Widget`.  Search for `FontSize`
 	 *           // in the `Theme` class (e.g., standard vs button)

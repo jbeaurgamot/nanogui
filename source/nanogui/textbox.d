@@ -24,7 +24,8 @@ import arsd.nanovega;
 import nanogui.widget : Widget;
 import nanogui.theme : Theme;
 import nanogui.common : Vector2i, MouseAction, MouseButton, Cursor, 
-    Color, boxGradient, fillColor, Vector2f, Key, KeyAction, KeyMod;
+    Color, boxGradient, fillColor, Vector2f, Key, KeyAction, KeyMod,
+	NanoContext;
 
 private auto squeezeGlyphs(T)(T[] glyphs_buffer, T[] glyphs)
 {
@@ -423,7 +424,7 @@ public:
         return false;
     }
 
-	override Vector2i preferredSize(NVGContext nvg) const
+	override Vector2i preferredSize(NanoContext nvg) const
 	{
 		Vector2i size = Vector2i(0, cast(int) (fontSize * 1.4f));
 
@@ -447,7 +448,7 @@ public:
 		return size;
 	}
 
-	override void draw(NVGContext nvg)
+	override void draw(NanoContext nvg)
     {
         super.draw(nvg);
 
@@ -761,7 +762,7 @@ protected:
         return false;
     }
 
-	void updateCursor(NVGContext nvg, float lastx,
+	void updateCursor(NanoContext nvg, float lastx,
 					  const(NVGGlyphPosition)[] glyphs)
     {
         // handle mouse cursor events

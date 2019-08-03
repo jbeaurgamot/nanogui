@@ -54,7 +54,7 @@ public:
     final Popup popup() { return mPopup; }
     final auto popup() const { return mPopup; }
 
-    override void draw(NVGContext nvg)
+    override void draw(NanoContext nvg)
     {
         if (!mEnabled && mPushed)
             mPushed = false;
@@ -87,11 +87,11 @@ public:
             nvg.text(iconPos.x, iconPos.y, [icon]);
         }
     }
-    override Vector2i preferredSize(NVGContext nvg) const
+    override Vector2i preferredSize(NanoContext nvg) const
     {
         return Button.preferredSize(nvg) + Vector2i(15, 0);
     }
-    override void performLayout(NVGContext nvg)
+    override void performLayout(NanoContext nvg)
     {
         Widget.performLayout(nvg);
 
