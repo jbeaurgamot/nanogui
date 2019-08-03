@@ -38,6 +38,7 @@ private class ListImplementor(T) : IListImplementor
 		size_t _scroll_position;
 		size_t _start_item;
 		size_t _finish_item;
+		size_t _shift;
 	}
 
 	@disable this();
@@ -83,10 +84,9 @@ private class ListImplementor(T) : IListImplementor
 		int size_y = (_parent.fixedSize.y) ? _parent.fixedSize.y : _parent.size.y;
 		assert(_size.y >= _parent.size.y);
 		const scroll_position = cast(size_t) (_parent.mScroll * (_size.y - _parent.size.y));
-		static size_t shift;
 		if (_scroll_position != scroll_position)
 		{
-			shift = heightToItemIndex(_data, scroll_position, size_y, _layout.spacing, _start_item, _finish_item, shift);
+			_shift = heightToItemIndex(_data, scroll_position, size_y, _layout.spacing, _start_item, _finish_item, _shift);
 			_scroll_position = scroll_position;
 		}
 
@@ -94,7 +94,7 @@ private class ListImplementor(T) : IListImplementor
 		auto ctx = Context(nvg);
 
 		ctx.position.x = _pos.x;
-		ctx.position.y = cast(int) shift + _pos.y;
+		ctx.position.y = cast(int) _shift + _pos.y;
 
 		import std.algorithm : min;
 		foreach(child; _data[_start_item..min(_finish_item, $)])
