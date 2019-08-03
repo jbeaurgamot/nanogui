@@ -2,8 +2,21 @@
 module nanogui.common;
 
 import gfm.math : vec2i, vec2f, vec3f, vec4f, vec4i;
-public import arsd.nanovega : NanoContext = NVGContext, NVGColor, NVGPaint, NVGImage;
+import arsd.nanovega : NVGContext;
 public import arsd.nanovega;
+
+struct NanoContext
+{
+	NVGContext nvg;
+	alias nvg this;
+
+	@disable this();
+
+	this(NVGContextFlag flag)
+	{
+		nvg = nvgCreateContext(flag);
+	}
+}
 
 alias Vector2i = vec2i;
 alias Vector2f = vec2f;
