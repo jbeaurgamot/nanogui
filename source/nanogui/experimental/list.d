@@ -340,7 +340,7 @@ public:
 			list_implementor.currentItemIndicesToHeight(s, f);
 			const scrollAmount = l > p.y ? (f - s) : -(f - s);
 
-			mScroll = max(0.0f, min(1.0f, mScroll - scrollAmount/cast(float)mChildPreferredHeight));
+			mScroll = max(0.0f, min(1.0f, mScroll - scrollAmount/2/cast(float)mChildPreferredHeight));
 			mUpdateLayout = true;
 			return true;
 		}
