@@ -90,7 +90,7 @@ private auto drawPodType(T)(ref NanoContext ctx, float height, T item)
 	else
 		static assert(0, T.stringof);
 
-	return ctx.drawItem(height, buffer[0..l]);
+	return ctx.drawString(height, buffer[0..l]);
 }
 
 struct DataItem(T)
@@ -316,7 +316,7 @@ private template Drawable(alias value, string member)
 
 /// returns alias sequence, members of which are members of value
 /// that should be drawn
-private template DrawableMembers(alias A)
+package template DrawableMembers(alias A)
 {
 	import std.meta : ApplyLeft, Filter, AliasSeq;
 	import std.traits : isType, Unqual;

@@ -102,6 +102,12 @@ public:
 		{
 			import std.stdio;
 			writeln(tree_path);
+			const old = mChecked;
+			scope(exit)
+			{
+				if (old != mChecked)
+					screen.needToPerfomLayout = true;
+			}
 			if (!isPointInRect(mPos, rect_size, p))
 				return false;
 			if (down)
@@ -128,7 +134,7 @@ public:
 		ctx.fontSize(fontSize());
 		ctx.fontFace("sans");
 		float[4] bounds;
-		const extra = mChecked ? (fontSize() * 1.3f * 1/*model.length*/) : 0;
+		const extra = mChecked ? (fontSize() * 1.3f * model.length) : 0;
 		return cast(Vector2i) Vector2f(
 			(ctx.textBounds(0, 0, mCaption, bounds[]) +
 				1.8f * fontSize()),
@@ -300,4 +306,23 @@ protected:
 	size_t[] tree_path;
 	// // number of current dimension (nesting level) of current tree path
 	// size_t current_dimension;
+}
+
+static auto length(Model)(Model model)
+{
+	import std.range : isRandomAccessRange;
+	import nanogui.experimental.utils : DrawableMembers, drawItem;
+
+	static if (isRandomAccessRange!Model)
+	{
+		return model.length;
+	}
+	else static if (is(Model == struct))
+	{
+		return DrawableMembers!Model.length;
+	}
+	else
+	{
+		return 1;
+	}
 }
