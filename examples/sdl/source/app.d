@@ -425,14 +425,28 @@ class MyGui : SdlBackend
 			import nanogui.experimental.treeview;
 			new TreeView!float(window, "TreeView_______", 10f, null);
 			new TreeView!(float[])(window, "TreeView_2_____", [11f, 22f, 33, 44], null);
-			new TreeView!float(window, "TreeView_3_____", 12f, null);
-			new TreeView!float(window, "TreeView_4_____", 13f, null);
+			new TreeView!Test(window, "TreeView_3_____", Test(), null);
+			new TreeView!Test2(window, "TreeView_4_____", Test2(), null);
 			new TreeView!(float[])(window, "TreeView_5_____", [14f, 100f], null);
 		}
 
 		// now we should do layout manually yet
 		screen.performLayout(ctx);
 	}
+}
+
+struct Test
+{
+	float f = 7.7;
+	int i = 8;
+	string s = "some text";
+}
+
+struct Test2
+{
+	double d = 8.8;
+	long l = 999;
+	Test t;
 }
 
 void main () {

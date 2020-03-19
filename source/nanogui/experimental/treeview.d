@@ -101,7 +101,7 @@ public:
 		if (button == MouseButton.Left)
 		{
 			import std.stdio;
-			writeln(tree_path);
+			writeln("tree path: ", tree_path);
 			const old = mChecked;
 			scope(exit)
 			{
@@ -134,7 +134,7 @@ public:
 		ctx.fontSize(fontSize());
 		ctx.fontFace("sans");
 		float[4] bounds;
-		const extra = mChecked ? (fontSize() * 1.3f * model.length) : 0;
+		const extra = mChecked ? (fontSize() * 1.3f * model.count) : 0;
 		return cast(Vector2i) Vector2f(
 			(ctx.textBounds(0, 0, mCaption, bounds[]) +
 				1.8f * fontSize()),
@@ -144,6 +144,11 @@ public:
 	/// Draws this TreeView.
 	override void draw(ref NanoContext ctx)
 	{
+// ctx.strokeWidth(1.0f);
+// ctx.beginPath;
+// ctx.rect(mPos.x + 1.0f, mPos.y + 0.0f, mSize.x - 1, mSize.y - 1);
+// ctx.strokeColor(Color(255, 0, 0, 255));
+// ctx.stroke;
 		// do not call super.draw() because we do custom drawing
 
 		Vector2i titleSize = void;
@@ -211,6 +216,12 @@ public:
 				tree_path[ctx.tree_view_nesting_level] = 0;
 			}
 		}
+
+		// walking along the data
+		//
+		// process caption (the main item)
+		// indent
+		// process nested items recursively
 
 		// content of tree view
 		if (mChecked)
@@ -308,21 +319,150 @@ protected:
 	// size_t current_dimension;
 }
 
-static auto length(Model)(Model model)
+static auto count(Model)(Model model) @safe
 {
 	import std.range : isRandomAccessRange;
+	import std.traits : isSomeString;
 	import nanogui.experimental.utils : DrawableMembers, drawItem;
 
-	static if (isRandomAccessRange!Model)
+	static if (isSomeString!Model)
+	{
+		return 1;
+	}
+	else static if (isRandomAccessRange!Model)
 	{
 		return model.length;
 	}
 	else static if (is(Model == struct))
 	{
-		return DrawableMembers!Model.length;
+		size_t l;
+		foreach(m; DrawableMembers!Model)
+			l += count(mixin("model." ~ m));
+		return l;
 	}
 	else
 	{
 		return 1;
+	}
+}
+
+@safe
+unittest
+{
+	static struct Test
+	{
+		float f = 7.7;
+		int i = 8;
+		string s = "some text";
+	}
+
+	static struct StructWithStruct
+	{
+		double d = 8.8;
+		long l = 999;
+		Test t;
+	}
+
+	static class TestClass
+	{
+
+	}
+
+	static struct StructWithPointerAndClass
+	{
+		double* d;
+		TestClass tc;
+	}
+
+	static struct StructWithNestedClass
+	{
+		TestClass tc;
+	}
+
+	assert(Test().count == 3);
+	assert(StructWithStruct().count == 5);
+
+	assert( isProcessible!float);
+	assert(!isProcessible!(float*));
+	assert( isProcessible!Test );
+	assert( isProcessible!StructWithStruct);
+	assert(!isProcessible!TestClass);
+	assert(!isProcessible!StructWithPointerAndClass);
+	assert(!isProcessible!StructWithNestedClass);
+}
+
+private template isProcessible(alias A)
+{
+	import std.traits, std.range;
+	import nanogui.experimental.utils;
+
+	static if (isType!A)
+	{
+		alias T = Unqual!A;
+	}
+	else
+	{
+		alias T = Unqual!(typeof(A));
+	}
+
+	static if (is(T == struct))
+	{
+		static foreach(member; DrawableMembers!T)
+			static if (!is(typeof(isProcessible) == bool) &&
+				!isProcessible!(mixin("T." ~ member)))
+			{
+				enum isProcessible = false;
+			}
+
+		static if (!is(typeof(isProcessible) == bool))
+			enum isProcessible = true;
+	}
+	else static if (isRandomAccessRange!T)
+	{
+		enum isProcessible = true;
+	}
+	else static if (isSomeString!T)
+	{
+		enum isProcessible = true;
+	}
+	else static if (isFloatingPoint!T)
+	{
+		enum isProcessible = true;
+	}
+	else static if (isIntegral!T)
+	{
+		enum isProcessible = true;
+	}
+	else static if (isSomeChar!T)
+	{
+		enum isProcessible = true;
+	}
+	else static if (is(T == bool))
+	{
+		enum isProcessible = true;
+	}
+	else
+		enum isProcessible = false;
+}
+
+private enum isCollapsable(T) = is(T == struct) || (isRandomAccessRange!T && !isSomeString!T);
+
+struct Model(Data)
+{
+	static assert(isProcessible!T);
+	// we need:
+	//     collapsed flag for every collapsable item (and only for them!)
+	//     tree path to current element that is under mouse cursor
+	//     nesting level (?)
+	//     indentation size (all items share it)
+	//     item height (all items share it)
+	//     ability to iterate over the data
+
+	static if (isCollapsable!Data) bool collapsed = true;
+	size_t[] tree_path;
+
+	void walkAlong()
+	{
+
 	}
 }

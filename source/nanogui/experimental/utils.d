@@ -288,7 +288,7 @@ private template hasProtection(alias aggregate, string member)
 
 // This trait defines what members should be drawn -
 // public members that are either readable and writable or getter properties
-private template Drawable(alias value, string member)
+package template Drawable(alias value, string member)
 {
 	import std.algorithm : among;
 	import std.traits : isTypeTuple, isSomeFunction;
@@ -335,5 +335,4 @@ package template DrawableMembers(alias A)
 	alias AllMembers = AliasSeq!(__traits(allMembers, Type));
 	alias isProper = ApplyLeft!(Drawable, symbol);
 	alias DrawableMembers = Filter!(isProper, AllMembers);
-
 }
