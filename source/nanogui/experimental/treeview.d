@@ -406,6 +406,15 @@ unittest
 
 	import std.traits : FieldNameTuple;
 	assert(FieldNameTuple!(Model!StructWithStruct).length == 4);
+
+	auto ss = StructWithStruct();
+	walkAlong(ss);
+	ss.d = 0;
+	ss.l = 1;
+	ss.t.f = 2;
+	ss.t.i = 3;
+	ss.t.s = "s";
+	walkAlong(ss);
 }
 
 private template isProcessible(alias A)
@@ -496,9 +505,27 @@ struct Model(alias A)
 		static foreach(i, member; DrawableMembers!Data)
 			mixin(text("Model!(Data.", member, ") item", i, ";"));
 	}
+}
 
-	void walkAlong()
+void walkAlong(Data)(auto ref Data data) if (Data.sizeof > (void*).sizeof)
+{
+	walkAlongImpl(data);
+}
+
+void walkAlong(Data)(Data data) if (Data.sizeof <= (void*).sizeof)
+{
+	walkAlongImpl(data);
+}
+
+private void walkAlongImpl(NestedData)(auto ref NestedData data)
+{
+	import nanogui.experimental.utils : DrawableMembers;
+	import std;
+	static if (isCollapsable!NestedData)
 	{
-
+		static foreach(member; DrawableMembers!NestedData)
+			walkAlong(mixin("data." ~ member));
 	}
+	else
+		writeln(data);
 }
