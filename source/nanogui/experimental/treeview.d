@@ -389,6 +389,23 @@ unittest
 	assert(!isProcessible!TestClass);
 	assert(!isProcessible!StructWithPointerAndClass);
 	assert(!isProcessible!StructWithNestedClass);
+
+	// check if Model!T has collapsed member
+	enum modelHasCollapsed(T) = is(typeof(Model!T.collapsed) == bool);
+
+	// Model of plain old data has no collapsed member
+	assert(!modelHasCollapsed!float);
+	// Model of structures has collapsed member
+	assert( modelHasCollapsed!Test );
+	assert( modelHasCollapsed!StructWithStruct);
+	// Model of unprocessible structures and classes do not
+	// exist so they have nothing
+	assert(!modelHasCollapsed!TestClass);
+	assert(!modelHasCollapsed!StructWithPointerAndClass);
+	assert(!modelHasCollapsed!StructWithNestedClass);
+
+	import std.traits : FieldNameTuple;
+	assert(FieldNameTuple!(Model!StructWithStruct).length == 4);
 }
 
 private template isProcessible(alias A)
@@ -445,11 +462,26 @@ private template isProcessible(alias A)
 		enum isProcessible = false;
 }
 
+private import std.range : isRandomAccessRange;
+private import std.traits : isSomeString;
 private enum isCollapsable(T) = is(T == struct) || (isRandomAccessRange!T && !isSomeString!T);
 
-struct Model(Data)
+struct Model(alias A)
 {
-	static assert(isProcessible!T);
+	import std.traits : isType, Unqual;
+	import std.conv : text;
+	import nanogui.experimental.utils : DrawableMembers;
+
+	static if (isType!A)
+	{
+		alias Data = Unqual!A;
+	}
+	else
+	{
+		alias Data = Unqual!(typeof(A));
+	}
+
+	static assert(isProcessible!Data);
 	// we need:
 	//     collapsed flag for every collapsable item (and only for them!)
 	//     tree path to current element that is under mouse cursor
@@ -458,8 +490,12 @@ struct Model(Data)
 	//     item height (all items share it)
 	//     ability to iterate over the data
 
-	static if (isCollapsable!Data) bool collapsed = true;
-	size_t[] tree_path;
+	static if (isCollapsable!Data)
+	{
+		bool collapsed = true;
+		static foreach(i, member; DrawableMembers!Data)
+			mixin(text("Model!(Data.", member, ") item", i, ";"));
+	}
 
 	void walkAlong()
 	{
