@@ -320,6 +320,7 @@ protected:
 }
 
 import std.traits : isInstanceOf;
+import taggedalgebraic;
 
 static auto count(M)(M model) @safe
 	if (isInstanceOf!(Model, M))
@@ -506,8 +507,9 @@ private template isProcessible(alias A)
 private import std.range : isRandomAccessRange;
 private import std.traits : isSomeString, isStaticArray;
 private enum StaticArrayModel(T) = isStaticArray!T;
-private enum RandomAccessRangeModel(T) = isRandomAccessRange!T && !isSomeString!T;
-private enum AggregateModel(T) = is(T == struct) && !RandomAccessRangeModel!T;
+private enum RandomAccessRangeModel(T) = isRandomAccessRange!T && !isSomeString!T && !TaggedAlgebraicModel!T;
+private enum AggregateModel(T) = is(T == struct) && !RandomAccessRangeModel!T && !TaggedAlgebraicModel!T;
+private enum TaggedAlgebraicModel(T) = is(T == struct) && isInstanceOf!(TaggedAlgebraic, T);
 private enum isCollapsable(T) = AggregateModel!T || StaticArrayModel!T || RandomAccessRangeModel!T;
 private template TypeOf(alias A)
 {
@@ -537,6 +539,25 @@ struct Model(alias A) if (RandomAccessRangeModel!(TypeOf!A))
 	static assert(isProcessible!Data);
 
 	bool collapsed = true;
+}
+
+struct Model(alias A) if (TaggedAlgebraicModel!(TypeOf!A))
+{
+	alias Data = TypeOf!A;
+	static assert(isProcessible!Data);
+
+	bool collapsed = true;
+
+	private static struct TAModel
+	{
+		import std.format : format;
+		import nanogui.experimental.utils : DrawableMembers;
+		static foreach(i, member; DrawableMembers!Data)
+		{
+			mixin("Model!(Data.%1$s) item%s_;".format(member, i));
+		}
+	}
+	TaggedAlgebraic!TAModel tamodel;
 }
 
 struct Model(alias A) if (AggregateModel!(TypeOf!A))
