@@ -429,28 +429,6 @@ unittest
 	import std.traits : FieldNameTuple;
 	assert(FieldNameTuple!(Model!StructWithStruct).length == 4);
 
-	static struct Context
-	{
-		private size_t _indent;
-
-		auto indentation()
-		{
-			import std.range : repeat, join;
-			return "\t".repeat(_indent).join;
-		}
-
-		void indent()
-		{
-			_indent++;
-		}
-
-		void unindent()
-		{
-			if (_indent)
-				_indent--;
-		}
-	}
-
 	auto ctx = Context();
 	auto ss = StructWithStruct();
 	auto m = Model!(typeof(ss))();
@@ -580,27 +558,27 @@ void walkAlong(Ctx, Data, DataModel)(ref Ctx ctx, Data data, ref DataModel model
 	walkAlongImpl(ctx, data, model);
 }
 
-private void walkAlongImpl(Ctx, NestedData, DataModel)(ref Ctx ctx, auto ref NestedData data, ref DataModel model)
+private void walkAlongImpl(Ctx, Data, DataModel)(ref Ctx ctx, auto ref Data data, ref DataModel model)
 {
 	import nanogui.experimental.utils : DrawableMembers;
 	import std;
-	static if (isCollapsable!NestedData)
+	static if (isCollapsable!Data)
 	{
-		writeln(ctx.indentation, "Caption: ", NestedData.stringof);
+		writeln(ctx.indentation, "Caption: ", Data.stringof);
 
 		if (!model.collapsed)
 		{
 			ctx.indent;
 			scope(exit) ctx.unindent;
 
-			static if (isStaticArray!NestedData)
+			static if (isStaticArray!Data)
 			{
 				foreach(e; data[])
 					writeln(ctx.indentation, e);
 			}
 			else
 			{
-				static foreach(member; DrawableMembers!NestedData)
+				static foreach(member; DrawableMembers!Data)
 					walkAlong(ctx, mixin("data." ~ member), mixin("model." ~ member));
 			}
 		}
@@ -609,32 +587,33 @@ private void walkAlongImpl(Ctx, NestedData, DataModel)(ref Ctx ctx, auto ref Nes
 		writeln(ctx.indentation, data);
 }
 
+@safe private
+struct Context
+{
+	private size_t _indent;
+
+	auto indentation()
+	{
+		import std.range : repeat, join;
+		return "\t".repeat(_indent).join;
+	}
+
+	void indent()
+	{
+		_indent++;
+	}
+
+	void unindent()
+	{
+		if (_indent)
+			_indent--;
+	}
+}
+
 unittest
 {
 	float[3] d = [1.1f, 2.2f, 3.3f];
 	auto m = Model!d();
-
-	static struct Context
-	{
-		private size_t _indent;
-
-		auto indentation()
-		{
-			import std.range : repeat, join;
-			return "\t".repeat(_indent).join;
-		}
-
-		void indent()
-		{
-			_indent++;
-		}
-
-		void unindent()
-		{
-			if (_indent)
-				_indent--;
-		}
-	}
 
 	Context ctx;
 	m.collapsed = false;
