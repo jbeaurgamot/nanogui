@@ -319,25 +319,35 @@ protected:
 	// size_t current_dimension;
 }
 
-static auto count(Model)(Model model) @safe
+import std.traits : isInstanceOf;
+
+static auto count(M)(M model) @safe
+	if (isInstanceOf!(Model, M))
 {
 	import std.range : isRandomAccessRange;
 	import std.traits : isSomeString;
 	import nanogui.experimental.utils : DrawableMembers, drawItem;
 
-	static if (isSomeString!Model)
+	static if (isSomeString!M)
 	{
 		return 1;
 	}
-	else static if (isRandomAccessRange!Model)
+	else static if (isRandomAccessRange!M)
 	{
 		return model.length;
 	}
-	else static if (is(Model == struct))
+	else static if (isCollapsable!M)
 	{
-		size_t l;
-		foreach(m; DrawableMembers!Model)
-			l += count(mixin("model." ~ m));
+		size_t l = 1;
+		static if (is(typeof(model.collapsed) == bool))
+			if (model.collapsed)
+				return l;
+
+		foreach(m; DrawableMembers!M)
+		{
+			static if (isInstanceOf!(Model, typeof(mixin("model." ~ m))))
+				l += count(mixin("model." ~ m));
+		}
 		return l;
 	}
 	else
@@ -379,8 +389,20 @@ unittest
 		TestClass tc;
 	}
 
-	assert(Test().count == 3);
-	assert(StructWithStruct().count == 5);
+	{
+		auto m = Model!Test();
+		assert(m.count == 1);
+		m.collapsed = false;
+		assert(m.count == 4);
+	}
+	{
+		auto m = Model!StructWithStruct();
+		assert(m.count == 1);
+		m.collapsed = false;
+		assert(m.count == 1+3);
+		m.t.collapsed = false;
+		assert(m.count == 1+3+3);
+	}
 
 	assert( isProcessible!float);
 	assert(!isProcessible!(float*));
