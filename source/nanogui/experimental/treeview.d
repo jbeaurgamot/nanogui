@@ -408,13 +408,14 @@ unittest
 	assert(FieldNameTuple!(Model!StructWithStruct).length == 4);
 
 	auto ss = StructWithStruct();
-	walkAlong(ss);
+	auto m = Model!(typeof(ss))();
+	walkAlong(ss, m);
 	ss.d = 0;
 	ss.l = 1;
 	ss.t.f = 2;
 	ss.t.i = 3;
 	ss.t.s = "s";
-	walkAlong(ss);
+	walkAlong(ss, m);
 }
 
 private template isProcessible(alias A)
@@ -507,24 +508,24 @@ struct Model(alias A)
 	}
 }
 
-void walkAlong(Data)(auto ref Data data) if (Data.sizeof > (void*).sizeof)
+void walkAlong(Data, DataModel)(auto ref Data data, ref DataModel model) if (Data.sizeof > (void*).sizeof)
 {
-	walkAlongImpl(data);
+	walkAlongImpl(data, model);
 }
 
-void walkAlong(Data)(Data data) if (Data.sizeof <= (void*).sizeof)
+void walkAlong(Data, DataModel)(Data data, ref DataModel model) if (Data.sizeof <= (void*).sizeof)
 {
-	walkAlongImpl(data);
+	walkAlongImpl(data, model);
 }
 
-private void walkAlongImpl(NestedData)(auto ref NestedData data)
+private void walkAlongImpl(NestedData, DataModel)(auto ref NestedData data, ref DataModel model)
 {
 	import nanogui.experimental.utils : DrawableMembers;
 	import std;
 	static if (isCollapsable!NestedData)
 	{
 		static foreach(member; DrawableMembers!NestedData)
-			walkAlong(mixin("data." ~ member));
+			walkAlong(mixin("data." ~ member), model);
 	}
 	else
 		writeln(data);
