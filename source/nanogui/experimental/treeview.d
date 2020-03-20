@@ -505,45 +505,57 @@ private template isProcessible(alias A)
 
 private import std.range : isRandomAccessRange;
 private import std.traits : isSomeString, isStaticArray;
-private enum isCollapsable(T) = is(T == struct) || isStaticArray!T || (isRandomAccessRange!T && !isSomeString!T);
-
-struct Model(alias A)
+private enum StaticArrayModel(T) = isStaticArray!T;
+private enum RandomAccessRangeModel(T) = isRandomAccessRange!T && !isSomeString!T;
+private enum AggregateModel(T) = is(T == struct) && !RandomAccessRangeModel!T;
+private enum isCollapsable(T) = AggregateModel!T || StaticArrayModel!T || RandomAccessRangeModel!T;
+private template TypeOf(alias A)
 {
 	import std.traits : isType, Unqual;
-	import std.format : format;
-	import nanogui.experimental.utils : DrawableMembers;
 
 	static if (isType!A)
 	{
-		alias Data = Unqual!A;
+		alias TypeOf = Unqual!A;
 	}
 	else
 	{
-		alias Data = Unqual!(typeof(A));
+		alias TypeOf = Unqual!(typeof(A));
 	}
+}
 
+struct Model(alias A) if (StaticArrayModel!(TypeOf!A))
+{
+	alias Data = TypeOf!A;
 	static assert(isProcessible!Data);
-	// we need:
-	//     collapsed flag for every collapsable item (and only for them!)
-	//     tree path to current element that is under mouse cursor
-	//     nesting level (?)
-	//     indentation size (all items share it)
-	//     item height (all items share it)
-	//     ability to iterate over the data
 
-	static if (isCollapsable!Data)
-	{
-		bool collapsed = true;
-		static if (isStaticArray!Data || isRandomAccessRange!Data)
-		{
-			// do nothing
-		}
-		else
-		{
-			static foreach(member; DrawableMembers!Data)
-				mixin("Model!(Data.%1$s) %1$s;".format(member));
-		}
-	}
+	bool collapsed = true;
+}
+
+struct Model(alias A) if (RandomAccessRangeModel!(TypeOf!A))
+{
+	alias Data = TypeOf!A;
+	static assert(isProcessible!Data);
+
+	bool collapsed = true;
+}
+
+struct Model(alias A) if (AggregateModel!(TypeOf!A))
+{
+	alias Data = TypeOf!A;
+	static assert(isProcessible!Data);
+
+	bool collapsed = true;
+
+	import std.format : format;
+	import nanogui.experimental.utils : DrawableMembers;
+	static foreach(member; DrawableMembers!Data)
+		mixin("Model!(Data.%1$s) %1$s;".format(member));
+}
+
+struct Model(alias A) if (!isCollapsable!(TypeOf!A))
+{
+	alias Data = TypeOf!A;
+	static assert(isProcessible!Data);
 }
 
 void walkAlong(Ctx, Data, DataModel)(ref Ctx ctx, auto ref Data data, ref DataModel model)
