@@ -531,6 +531,9 @@ struct Model(alias A) if (StaticArrayModel!(TypeOf!A))
 	static assert(isProcessible!Data);
 
 	bool collapsed = true;
+
+	alias ElementType = typeof(Data.init[0]);
+	Model!ElementType[Data.length] samodel;
 }
 
 struct Model(alias A) if (RandomAccessRangeModel!(TypeOf!A))
@@ -604,7 +607,12 @@ private void walkAlongImpl(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, re
 			ctx.indent;
 			scope(exit) ctx.unindent;
 
-			static if (isStaticArray!Data || isRandomAccessRange!Data)
+			static if (isStaticArray!Data)
+			{
+				foreach(i; 0..data.length)
+					walkAlong(ctx, data[i], model.samodel[i]);
+			}
+			else static if (isRandomAccessRange!Data)
 			{
 				foreach(e; data[])
 					writeln(ctx.indentation, e);
