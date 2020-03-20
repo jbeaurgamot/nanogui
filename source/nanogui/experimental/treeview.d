@@ -407,15 +407,42 @@ unittest
 	import std.traits : FieldNameTuple;
 	assert(FieldNameTuple!(Model!StructWithStruct).length == 4);
 
+	static struct Context
+	{
+		private size_t _indent;
+
+		auto indentation()
+		{
+			import std.range : repeat, join;
+			return "\t".repeat(_indent).join;
+		}
+
+		void indent()
+		{
+			_indent++;
+		}
+
+		void unindent()
+		{
+			if (_indent)
+				_indent--;
+		}
+	}
+
+	auto ctx = Context();
 	auto ss = StructWithStruct();
 	auto m = Model!(typeof(ss))();
-	walkAlong(ss, m);
+	walkAlong(ctx, ss, m);
 	ss.d = 0;
 	ss.l = 1;
 	ss.t.f = 2;
 	ss.t.i = 3;
 	ss.t.s = "s";
-	walkAlong(ss, m);
+	walkAlong(ctx, ss, m);
+	m.collapsed = false;
+	walkAlong(ctx, ss, m);
+	m.t.collapsed = false;
+	walkAlong(ctx, ss, m);
 }
 
 private template isProcessible(alias A)
@@ -479,7 +506,7 @@ private enum isCollapsable(T) = is(T == struct) || (isRandomAccessRange!T && !is
 struct Model(alias A)
 {
 	import std.traits : isType, Unqual;
-	import std.conv : text;
+	import std.format : format;
 	import nanogui.experimental.utils : DrawableMembers;
 
 	static if (isType!A)
@@ -503,30 +530,39 @@ struct Model(alias A)
 	static if (isCollapsable!Data)
 	{
 		bool collapsed = true;
-		static foreach(i, member; DrawableMembers!Data)
-			mixin(text("Model!(Data.", member, ") item", i, ";"));
+		static foreach(member; DrawableMembers!Data)
+			mixin("Model!(Data.%1$s) %1$s;".format(member));
 	}
 }
 
-void walkAlong(Data, DataModel)(auto ref Data data, ref DataModel model) if (Data.sizeof > (void*).sizeof)
+void walkAlong(Ctx, Data, DataModel)(ref Ctx ctx, auto ref Data data, ref DataModel model)
+	if (Data.sizeof > (void*).sizeof)
 {
-	walkAlongImpl(data, model);
+	walkAlongImpl(ctx, data, model);
 }
 
-void walkAlong(Data, DataModel)(Data data, ref DataModel model) if (Data.sizeof <= (void*).sizeof)
+void walkAlong(Ctx, Data, DataModel)(ref Ctx ctx, Data data, ref DataModel model)
+	if (Data.sizeof <= (void*).sizeof)
 {
-	walkAlongImpl(data, model);
+	walkAlongImpl(ctx, data, model);
 }
 
-private void walkAlongImpl(NestedData, DataModel)(auto ref NestedData data, ref DataModel model)
+private void walkAlongImpl(Ctx, NestedData, DataModel)(ref Ctx ctx, auto ref NestedData data, ref DataModel model)
 {
 	import nanogui.experimental.utils : DrawableMembers;
 	import std;
 	static if (isCollapsable!NestedData)
 	{
-		static foreach(member; DrawableMembers!NestedData)
-			walkAlong(mixin("data." ~ member), model);
+		writeln(ctx.indentation, "Caption", NestedData.stringof);
+
+		if (!model.collapsed)
+		{
+			ctx.indent;
+			scope(exit) ctx.unindent;
+			static foreach(member; DrawableMembers!NestedData)
+				walkAlong(ctx, mixin("data." ~ member), mixin("model." ~ member));
+		}
 	}
 	else
-		writeln(data);
+		writeln(ctx.indentation, data);
 }
