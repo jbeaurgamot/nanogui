@@ -579,19 +579,19 @@ struct Model(alias A) if (!isCollapsable!(TypeOf!A))
 	static assert(isProcessible!Data);
 }
 
-void walkAlong(Ctx, Data, DataModel)(ref Ctx ctx, auto ref Data data, ref DataModel model)
+void walkAlong(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, ref Model model)
 	if (Data.sizeof > (void*).sizeof)
 {
 	walkAlongImpl(ctx, data, model);
 }
 
-void walkAlong(Ctx, Data, DataModel)(ref Ctx ctx, Data data, ref DataModel model)
+void walkAlong(Ctx, Data, Model)(ref Ctx ctx, Data data, ref Model model)
 	if (Data.sizeof <= (void*).sizeof)
 {
 	walkAlongImpl(ctx, data, model);
 }
 
-private void walkAlongImpl(Ctx, Data, DataModel)(ref Ctx ctx, auto ref Data data, ref DataModel model)
+private void walkAlongImpl(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, ref Model model)
 {
 	import nanogui.experimental.utils : DrawableMembers;
 	import std;
