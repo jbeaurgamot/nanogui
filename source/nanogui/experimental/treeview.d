@@ -493,6 +493,10 @@ private template isProcessible(alias A)
 		static if (!is(typeof(isProcessible) == bool))
 			enum isProcessible = true;
 	}
+	else static if (isStaticArray!T)
+	{
+		enum isProcessible = true;
+	}
 	else static if (isRandomAccessRange!T)
 	{
 		enum isProcessible = true;
@@ -522,8 +526,8 @@ private template isProcessible(alias A)
 }
 
 private import std.range : isRandomAccessRange;
-private import std.traits : isSomeString;
-private enum isCollapsable(T) = is(T == struct) || (isRandomAccessRange!T && !isSomeString!T);
+private import std.traits : isSomeString, isStaticArray;
+private enum isCollapsable(T) = is(T == struct) || isStaticArray!T || (isRandomAccessRange!T && !isSomeString!T);
 
 struct Model(alias A)
 {
@@ -552,8 +556,15 @@ struct Model(alias A)
 	static if (isCollapsable!Data)
 	{
 		bool collapsed = true;
-		static foreach(member; DrawableMembers!Data)
-			mixin("Model!(Data.%1$s) %1$s;".format(member));
+		static if (isStaticArray!Data)
+		{
+			// do nothing
+		}
+		else
+		{
+			static foreach(member; DrawableMembers!Data)
+				mixin("Model!(Data.%1$s) %1$s;".format(member));
+		}
 	}
 }
 
@@ -575,16 +586,57 @@ private void walkAlongImpl(Ctx, NestedData, DataModel)(ref Ctx ctx, auto ref Nes
 	import std;
 	static if (isCollapsable!NestedData)
 	{
-		writeln(ctx.indentation, "Caption", NestedData.stringof);
+		writeln(ctx.indentation, "Caption: ", NestedData.stringof);
 
 		if (!model.collapsed)
 		{
 			ctx.indent;
 			scope(exit) ctx.unindent;
-			static foreach(member; DrawableMembers!NestedData)
-				walkAlong(ctx, mixin("data." ~ member), mixin("model." ~ member));
+
+			static if (isStaticArray!NestedData)
+			{
+				foreach(e; data[])
+					writeln(ctx.indentation, e);
+			}
+			else
+			{
+				static foreach(member; DrawableMembers!NestedData)
+					walkAlong(ctx, mixin("data." ~ member), mixin("model." ~ member));
+			}
 		}
 	}
 	else
 		writeln(ctx.indentation, data);
+}
+
+unittest
+{
+	float[3] d = [1.1f, 2.2f, 3.3f];
+	auto m = Model!d();
+
+	static struct Context
+	{
+		private size_t _indent;
+
+		auto indentation()
+		{
+			import std.range : repeat, join;
+			return "\t".repeat(_indent).join;
+		}
+
+		void indent()
+		{
+			_indent++;
+		}
+
+		void unindent()
+		{
+			if (_indent)
+				_indent--;
+		}
+	}
+
+	Context ctx;
+	m.collapsed = false;
+	walkAlong(ctx, d, m);
 }
