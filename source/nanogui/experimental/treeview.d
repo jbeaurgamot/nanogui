@@ -534,7 +534,7 @@ struct Model(alias A)
 	static if (isCollapsable!Data)
 	{
 		bool collapsed = true;
-		static if (isStaticArray!Data)
+		static if (isStaticArray!Data || isRandomAccessRange!Data)
 		{
 			// do nothing
 		}
@@ -571,7 +571,7 @@ private void walkAlongImpl(Ctx, Data, DataModel)(ref Ctx ctx, auto ref Data data
 			ctx.indent;
 			scope(exit) ctx.unindent;
 
-			static if (isStaticArray!Data)
+			static if (isStaticArray!Data || isRandomAccessRange!Data)
 			{
 				foreach(e; data[])
 					writeln(ctx.indentation, e);
@@ -617,5 +617,21 @@ unittest
 
 	Context ctx;
 	m.collapsed = false;
+	walkAlong(ctx, d, m);
+}
+
+unittest
+{
+	float[] d = [1.1f, 2.2f, 3.3f];
+	auto m = Model!d();
+
+	Context ctx;
+	m.collapsed = false;
+	walkAlong(ctx, d, m);
+
+	d ~= [4.4f, 5.5f];
+	walkAlong(ctx, d, m);
+
+	d = d[2..3];
 	walkAlong(ctx, d, m);
 }
