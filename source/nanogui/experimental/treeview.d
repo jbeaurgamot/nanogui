@@ -510,7 +510,7 @@ private enum StaticArrayModel(T) = isStaticArray!T;
 private enum RandomAccessRangeModel(T) = isRandomAccessRange!T && !isSomeString!T && !TaggedAlgebraicModel!T;
 private enum AggregateModel(T) = is(T == struct) && !RandomAccessRangeModel!T && !TaggedAlgebraicModel!T;
 private enum TaggedAlgebraicModel(T) = is(T == struct) && isInstanceOf!(TaggedAlgebraic, T);
-private enum isCollapsable(T) = AggregateModel!T || StaticArrayModel!T || RandomAccessRangeModel!T;
+private enum isCollapsable(T) = AggregateModel!T || StaticArrayModel!T || RandomAccessRangeModel!T || TaggedAlgebraicModel!T;
 private template TypeOf(alias A)
 {
 	import std.traits : isType, Unqual;
@@ -534,6 +534,18 @@ struct Model(alias A) if (StaticArrayModel!(TypeOf!A))
 
 	alias ElementType = typeof(Data.init[0]);
 	Model!ElementType[Data.length] samodel;
+
+	this()(Data data) if (Data.sizeof <= (void*).sizeof)
+	{
+		foreach(ref e; samodel)
+			e = Model!ElementType(data);
+	}
+
+	this()(ref Data data) if (Data.sizeof > (void*).sizeof)
+	{
+		foreach(ref e; samodel)
+			e = Model!ElementType(data);
+	}
 }
 
 struct Model(alias A) if (RandomAccessRangeModel!(TypeOf!A))
@@ -542,6 +554,23 @@ struct Model(alias A) if (RandomAccessRangeModel!(TypeOf!A))
 	static assert(isProcessible!Data);
 
 	bool collapsed = true;
+
+	alias ElementType = typeof(Data.init[0]);
+	Model!ElementType[] rarmodel;
+
+	this()(Data data) if (Data.sizeof <= (void*).sizeof)
+	{
+		rarmodel.length = data.length;
+		foreach(i, ref e; rarmodel)
+			e = Model!ElementType(data[i]);
+	}
+
+	this()(ref Data data) if (Data.sizeof > (void*).sizeof)
+	{
+		rarmodel.length = data.length;
+		foreach(i, ref e; rarmodel)
+			e = Model!ElementType(data[i]);
+	}
 }
 
 struct Model(alias A) if (TaggedAlgebraicModel!(TypeOf!A))
@@ -551,16 +580,76 @@ struct Model(alias A) if (TaggedAlgebraicModel!(TypeOf!A))
 
 	bool collapsed = true;
 
-	private static struct TAModel
+	private static struct StructType
 	{
-		import std.format : format;
-		import nanogui.experimental.utils : DrawableMembers;
-		static foreach(i, member; DrawableMembers!Data)
+		static foreach(i, fname; Data.UnionType.fieldNames)
 		{
-			mixin("Model!(Data.%1$s) item%s_;".format(member, i));
+			mixin("Model!(Data.UnionType.FieldTypes[__traits(getMember, Data.Kind, fname)]) " ~ fname ~ ";");
 		}
 	}
-	TaggedAlgebraic!TAModel tamodel;
+
+	static struct TAModel
+	{
+		TaggedAlgebraic!StructType value;
+		alias value this;
+
+		void collapsed(bool v)
+		{
+			final switch(value.kind)
+			{
+				foreach (i, FT; value.UnionType.FieldTypes)
+				{
+					case __traits(getMember, value.Kind, value.UnionType.fieldNames[i]):
+						static if (is(typeof(taggedalgebraic.get!FT(value).collapsed) == bool))
+							taggedalgebraic.get!FT(value).collapsed = v;
+					break;
+				}
+			}
+		}
+
+		bool collapsed() const
+		{
+			final switch(value.kind)
+			{
+				foreach (i, FT; value.UnionType.FieldTypes)
+				{
+					case __traits(getMember, value.Kind, value.UnionType.fieldNames[i]):
+						static if (is(typeof(taggedalgebraic.get!FT(value).collapsed) == bool))
+							return taggedalgebraic.get!FT(value).collapsed;
+				}
+			}
+			assert(0); // never reached
+		}
+
+		this(T)(T v)
+		{
+			value = v;
+		}
+	}
+	TAModel tamodel;
+
+	/// returns a model corresponding to given data value
+	static TAModel makeModel(ref Data data)
+	{
+		final switch(data.kind)
+		{
+			foreach (i, FT; data.UnionType.FieldTypes)
+			{
+				case __traits(getMember, data.Kind, data.UnionType.fieldNames[i]):
+					return TAModel(Model!FT(data.get!FT));
+			}
+		}
+	}
+
+	this()(Data data) if (Data.sizeof <= (void*).sizeof)
+	{
+		tamodel = makeModel(data);
+	}
+
+	this()(ref Data data) if (Data.sizeof > (void*).sizeof)
+	{
+		tamodel = makeModel(data);
+	}
 }
 
 struct Model(alias A) if (AggregateModel!(TypeOf!A))
@@ -574,12 +663,32 @@ struct Model(alias A) if (AggregateModel!(TypeOf!A))
 	import nanogui.experimental.utils : DrawableMembers;
 	static foreach(member; DrawableMembers!Data)
 		mixin("Model!(Data.%1$s) %1$s;".format(member));
+
+	this()(Data data) if (Data.sizeof <= (void*).sizeof)
+	{
+		static foreach(member; DrawableMembers!Data)
+			mixin("%1$s = Model!(Data.%1$s)(data.%1$s);".format(member));
+	}
+
+	this()(ref Data data) if (Data.sizeof > (void*).sizeof)
+	{
+		static foreach(member; DrawableMembers!Data)
+			mixin("%1$s = Model!(Data.%1$s)(data.%1$s);".format(member));
+	}
 }
 
 struct Model(alias A) if (!isCollapsable!(TypeOf!A))
 {
 	alias Data = TypeOf!A;
 	static assert(isProcessible!Data);
+
+	this()(Data data) if (Data.sizeof <= (void*).sizeof)
+	{
+	}
+
+	this()(ref Data data) if (Data.sizeof > (void*).sizeof)
+	{
+	}
 }
 
 void walkAlong(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, ref Model model)
@@ -600,28 +709,53 @@ private void walkAlongImpl(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, re
 	import std;
 	static if (isCollapsable!Data)
 	{
-		writeln(ctx.indentation, "Caption: ", Data.stringof);
+		// we do not consider this TaggedAlgebraicModel as collapsable itself
+		// because it is just a container so there is no caption for it
+		static if (!TaggedAlgebraicModel!Data)
+			writeln(ctx.indentation, "Caption: ", Data.stringof);
 
 		if (!model.collapsed)
 		{
 			ctx.indent;
 			scope(exit) ctx.unindent;
 
-			static if (isStaticArray!Data)
+			static if (StaticArrayModel!Data)
 			{
 				foreach(i; 0..data.length)
 					walkAlong(ctx, data[i], model.samodel[i]);
 			}
-			else static if (isRandomAccessRange!Data)
+			else static if (RandomAccessRangeModel!Data)
 			{
-				foreach(e; data[])
-					writeln(ctx.indentation, e);
+				assert(data.length == model.rarmodel.length);
+				foreach(i; 0..data.length)
+					walkAlong(ctx, data[i], model.rarmodel[i]);
 			}
-			else
+			else static if (TaggedAlgebraicModel!Data)
+			{
+				// we do not consider this TaggedAlgebraicModel as collapsable itself
+				// because it is just a container so remove one indentation level
+				ctx.unindent;
+				scope(exit) ctx.indent;
+				final switch (data.kind) {
+					foreach (i, fname; Data.UnionType.fieldNames)
+					{
+						case __traits(getMember, data.Kind, fname):
+							enum idx = __traits(getMember, Data.Kind, fname);
+							alias T = Data.UnionType.FieldTypes[idx];
+							walkAlong(ctx, 
+								taggedalgebraic.get!T(data),
+								taggedalgebraic.get!(.Model!T)(model.tamodel));
+						break;
+					}
+				}
+			}
+			else static if (AggregateModel!Data)
 			{
 				static foreach(member; DrawableMembers!Data)
 					walkAlong(ctx, mixin("data." ~ member), mixin("model." ~ member));
 			}
+			else
+				static assert(0);
 		}
 	}
 	else
@@ -668,11 +802,70 @@ unittest
 
 	Context ctx;
 	m.collapsed = false;
+	m.rarmodel.length = d.length;
 	walkAlong(ctx, d, m);
 
 	d ~= [4.4f, 5.5f];
+	m.rarmodel.length = d.length;
 	walkAlong(ctx, d, m);
 
 	d = d[2..3];
+	m.rarmodel.length = d.length;
 	walkAlong(ctx, d, m);
+}
+
+unittest
+{
+	static struct Struct
+	{
+		double d;
+		char c;
+	}
+
+	struct Payload
+	{
+		Void v;
+		float f;
+		int i;
+		string sg;
+		Struct st;
+		string[] sa;
+		double[] da;
+	}
+
+	alias Data = TaggedAlgebraic!Payload;
+
+	Data[] data = [
+		Data(1.2f),
+		Data(4),
+		Data("string"),
+		Data(Struct(100, 'd')),
+		Data(["str0", "str1", "str2"]),
+		Data([0.1, 0.2, 0.3]),
+	];
+	import std;
+	writeln(data);
+
+	writeln(isProcessible!(Data[]));
+	writeln(Model!(Data[])());
+	import nanogui.experimental.utils;
+	writeln([DrawableMembers!Data]);
+
+	Context ctx;
+	auto model = Model!(Data[])(data);
+	assert(model.rarmodel.length == data.length);
+	assert(taggedalgebraic.get!(Model!(string[]))(model.rarmodel[4].tamodel).rarmodel.length == data[4].length);
+
+	model.collapsed = false;
+
+	model.rarmodel[3].collapsed = false;
+	model.rarmodel[3].tamodel.collapsed = false;
+
+	model.rarmodel[4].collapsed = false;
+	model.rarmodel[4].tamodel.collapsed = false;
+
+	foreach(ref e; model.rarmodel)
+		e.collapsed = false;
+
+	walkAlong(ctx, data, model);
 }
