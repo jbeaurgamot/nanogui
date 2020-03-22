@@ -551,13 +551,16 @@ struct Model(alias A) if (StaticArrayModel!(TypeOf!A))
 
 struct Model(alias A) if (RandomAccessRangeModel!(TypeOf!A))
 {
+	import automem : Vector;
+	import std.experimental.allocator.mallocator : Mallocator;
+
 	alias Data = TypeOf!A;
 	static assert(isProcessible!Data);
 
 	bool collapsed = true;
 
 	alias ElementType = typeof(Data.init[0]);
-	Model!ElementType[] rarmodel;
+	Vector!(Model!ElementType, Mallocator) rarmodel;
 	alias rarmodel this;
 
 	this()(Data data) if (Data.sizeof <= (void*).sizeof)
@@ -893,4 +896,23 @@ unittest
 	data[4].get!(string[])[0] = "former 4th element, now the only one";
 	model[4].update(data[4]);
 	walkAlong(ctx, data, model);
+}
+
+// @nogc
+unittest
+{
+	import std.algorithm : copy;
+	import std.experimental.allocator.mallocator : Mallocator;
+	import automem.vector : Vector;
+	Vector!(float, Mallocator) data;
+	data ~= 0.1f;
+	data ~= 0.2f;
+	data ~= 0.3f;
+
+	auto model = makeModel(data[]);
+
+	Context ctx;
+	walkAlong(ctx, data[], model);
+	model.collapsed = false;
+	walkAlong(ctx, data[], model);
 }
