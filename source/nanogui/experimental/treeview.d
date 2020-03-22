@@ -534,6 +534,7 @@ struct Model(alias A) if (StaticArrayModel!(TypeOf!A))
 
 	alias ElementType = typeof(Data.init[0]);
 	Model!ElementType[Data.length] samodel;
+	alias samodel this;
 
 	this()(Data data) if (Data.sizeof <= (void*).sizeof)
 	{
@@ -557,19 +558,28 @@ struct Model(alias A) if (RandomAccessRangeModel!(TypeOf!A))
 
 	alias ElementType = typeof(Data.init[0]);
 	Model!ElementType[] rarmodel;
+	alias rarmodel this;
 
 	this()(Data data) if (Data.sizeof <= (void*).sizeof)
+	{
+		update(data);
+	}
+
+	this()(ref Data data) if (Data.sizeof > (void*).sizeof)
+	{
+		update(data);
+	}
+
+	void update(ref Data data)
 	{
 		rarmodel.length = data.length;
 		foreach(i, ref e; rarmodel)
 			e = Model!ElementType(data[i]);
 	}
 
-	this()(ref Data data) if (Data.sizeof > (void*).sizeof)
+	void update(T)(ref TaggedAlgebraic!T v)
 	{
-		rarmodel.length = data.length;
-		foreach(i, ref e; rarmodel)
-			e = Model!ElementType(data[i]);
+		update(taggedalgebraic.get!Data(v));
 	}
 }
 
@@ -627,6 +637,7 @@ struct Model(alias A) if (TaggedAlgebraicModel!(TypeOf!A))
 		}
 	}
 	TAModel tamodel;
+	alias tamodel this;
 
 	/// returns a model corresponding to given data value
 	static TAModel makeModel(ref Data data)
@@ -689,6 +700,11 @@ struct Model(alias A) if (!isCollapsable!(TypeOf!A))
 	this()(ref Data data) if (Data.sizeof > (void*).sizeof)
 	{
 	}
+}
+
+auto makeModel(T)(auto ref T data)
+{
+	return Model!T(data);
 }
 
 void walkAlong(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, ref Model model)
@@ -843,7 +859,7 @@ unittest
 		Data(["str0", "str1", "str2"]),
 		Data([0.1, 0.2, 0.3]),
 	];
-	import std;
+	import std.stdio;
 	writeln(data);
 
 	writeln(isProcessible!(Data[]));
@@ -851,10 +867,9 @@ unittest
 	import nanogui.experimental.utils;
 	writeln([DrawableMembers!Data]);
 
-	Context ctx;
-	auto model = Model!(Data[])(data);
-	assert(model.rarmodel.length == data.length);
-	assert(taggedalgebraic.get!(Model!(string[]))(model.rarmodel[4].tamodel).rarmodel.length == data[4].length);
+	auto model = makeModel(data);
+	assert(model.length == data.length);
+	assert(model[4].get!(Model!(string[])).length == data[4].length);
 
 	model.collapsed = false;
 
@@ -867,5 +882,15 @@ unittest
 	foreach(ref e; model.rarmodel)
 		e.collapsed = false;
 
+	Context ctx;
+	walkAlong(ctx, data, model);
+
+	data[4] ~= "recently added 4th element";
+	model[4].update(data[4]);
+	walkAlong(ctx, data, model);
+
+	data[4] = data[4].get!(string[])[3..$];
+	data[4].get!(string[])[0] = "former 4th element, now the only one";
+	model[4].update(data[4]);
 	walkAlong(ctx, data, model);
 }
