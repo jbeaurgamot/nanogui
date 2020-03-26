@@ -725,13 +725,12 @@ void walkAlong(Ctx, Data, Model)(ref Ctx ctx, Data data, ref Model model)
 private void walkAlongImpl(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, ref Model model)
 {
 	import nanogui.experimental.utils : DrawableMembers;
-	import std;
 	static if (isCollapsable!Data)
 	{
 		// we do not consider this TaggedAlgebraicModel as collapsable itself
 		// because it is just a container so there is no caption for it
 		static if (!TaggedAlgebraicModel!Data)
-			writeln(ctx.indentation, "Caption: ", Data.stringof);
+			ctx.processItem("Caption: ", Data.stringof);
 
 		if (!model.collapsed)
 		{
@@ -778,48 +777,86 @@ private void walkAlongImpl(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, re
 		}
 	}
 	else
-		writeln(ctx.indentation, data);
+		ctx.processItem(data);
 }
 
 @safe private
 struct Context
 {
-	private size_t _indent;
+	import std.experimental.allocator.mallocator : Mallocator;
+	import automem.vector : Vector, StringM;
+	import std.algorithm : copy;
 
-	auto indentation()
+	Vector!(char, Mallocator) output;
+	private size_t _indent;
+	private Vector!(char, Mallocator) _indentation;
+
+	auto processItem(T...)(T msg) @nogc @trusted
 	{
-		import std.range : repeat, join;
-		return "\t".repeat(_indent).join;
+		output ~= indentation[];
+
+		import nogc.conv : text;
+		output ~= text(msg, "\n")[];
 	}
 
-	void indent()
+	auto indentation() @nogc
+	{
+		return _indentation;
+	}
+
+	void indent() @nogc @trusted
 	{
 		_indent++;
+		_indentation ~= '\t';
 	}
 
-	void unindent()
+	void unindent() @nogc @trusted
 	{
 		if (_indent)
+		{
 			_indent--;
+			_indentation.popBack;
+		}
 	}
 }
 
+// static array
+@nogc
 unittest
 {
 	float[3] d = [1.1f, 2.2f, 3.3f];
 	auto m = Model!d();
 
 	Context ctx;
+	ctx.processItem;
 	m.collapsed = false;
 	walkAlong(ctx, d, m);
+
+	ctx.output ~= '\0';
+	version(none)
+	{
+		import core.stdc.stdio : printf;
+		printf("%s\nlength: %ld\n", ctx.output[].ptr, ctx.output.length);
+	}
+
+	import std.algorithm : equal;
+	assert(ctx.output[].equal("
+Caption: float[3]
+	1.100000
+	2.200000
+	3.300000
+\0"
+	));
 }
 
+// dynamic array
 unittest
 {
 	float[] d = [1.1f, 2.2f, 3.3f];
 	auto m = Model!d();
 
 	Context ctx;
+	ctx.processItem;
 	m.collapsed = false;
 	m.rarmodel.length = d.length;
 	walkAlong(ctx, d, m);
@@ -831,6 +868,30 @@ unittest
 	d = d[2..3];
 	m.rarmodel.length = d.length;
 	walkAlong(ctx, d, m);
+
+	ctx.output ~= '\0';
+	version(none)
+	{
+		import core.stdc.stdio : printf;
+		printf("%s\nlength: %ld\n", ctx.output[].ptr, ctx.output.length);
+	}
+
+	import std.algorithm : equal;
+	assert(ctx.output[].equal("
+Caption: float[]
+	1.100000
+	2.200000
+	3.300000
+Caption: float[]
+	1.100000
+	2.200000
+	3.300000
+	4.400000
+	5.500000
+Caption: float[]
+	3.300000
+\0"
+	));
 }
 
 unittest
@@ -862,13 +923,6 @@ unittest
 		Data(["str0", "str1", "str2"]),
 		Data([0.1, 0.2, 0.3]),
 	];
-	import std.stdio;
-	writeln(data);
-
-	writeln(isProcessible!(Data[]));
-	writeln(Model!(Data[])());
-	import nanogui.experimental.utils;
-	writeln([DrawableMembers!Data]);
 
 	auto model = makeModel(data);
 	assert(model.length == data.length);
@@ -886,6 +940,7 @@ unittest
 		e.collapsed = false;
 
 	Context ctx;
+	ctx.processItem;
 	walkAlong(ctx, data, model);
 
 	data[4] ~= "recently added 4th element";
@@ -896,9 +951,56 @@ unittest
 	data[4].get!(string[])[0] = "former 4th element, now the only one";
 	model[4].update(data[4]);
 	walkAlong(ctx, data, model);
+
+	ctx.output ~= '\0';
+	version(none)
+	{
+		import core.stdc.stdio : printf;
+		printf("%s\nlength: %ld\n", ctx.output[].ptr, ctx.output.length);
+	}
+
+	import std.algorithm : equal;
+	assert(ctx.output[].equal("
+Caption: TaggedAlgebraic!(Payload)[]
+	1.200000
+	4
+	string
+	Caption: Struct
+		100.000000
+		d
+	Caption: string[]
+		str0
+		str1
+		str2
+	Caption: double[]
+Caption: TaggedAlgebraic!(Payload)[]
+	1.200000
+	4
+	string
+	Caption: Struct
+		100.000000
+		d
+	Caption: string[]
+		str0
+		str1
+		str2
+		recently added 4th element
+	Caption: double[]
+Caption: TaggedAlgebraic!(Payload)[]
+	1.200000
+	4
+	string
+	Caption: Struct
+		100.000000
+		d
+	Caption: string[]
+		former 4th element, now the only one
+	Caption: double[]
+\0"
+	));
 }
 
-// @nogc
+@nogc
 unittest
 {
 	import std.algorithm : copy;
@@ -912,7 +1014,25 @@ unittest
 	auto model = makeModel(data[]);
 
 	Context ctx;
+	ctx.processItem;
 	walkAlong(ctx, data[], model);
 	model.collapsed = false;
 	walkAlong(ctx, data[], model);
+
+	ctx.output ~= '\0';
+	version(none)
+	{
+		import core.stdc.stdio : printf;
+		printf("%s\nlength: %ld\n", ctx.output[].ptr, ctx.output.length);
+	}
+
+	import std.algorithm : equal;
+	assert(ctx.output[].equal("
+Caption: float[]
+Caption: float[]
+	0.100000
+	0.200000
+	0.300000
+\0"
+	));
 }
