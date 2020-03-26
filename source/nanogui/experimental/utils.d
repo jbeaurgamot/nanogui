@@ -264,10 +264,21 @@ private template isConstProperty(alias aggregate, string member)
 {
 	import std.traits : isSomeFunction, hasFunctionAttributes;
 
-	static if(isSomeFunction!(__traits(getMember, aggregate, member)))
+	static if(isSomeFunction!(__traits(getMember, typeof(aggregate), member)))
 		enum isConstProperty = hasFunctionAttributes!(__traits(getMember, aggregate, member), "const", "@property");
 	else
 		enum isConstProperty = false;
+}
+
+// check if the member is property
+private template isProperty(alias aggregate, string member)
+{
+	import std.traits : isSomeFunction, functionAttributes, FunctionAttribute;
+
+	static if(isSomeFunction!(__traits(getMember, typeof(aggregate), member)))
+		enum isProperty = !!(functionAttributes!(__traits(getMember, typeof(aggregate), member)) & FunctionAttribute.property);
+	else
+		enum isProperty = false;
 }
 
 // check if the member is readable
@@ -283,7 +294,7 @@ private template isItSequence(T...)
 
 private template hasProtection(alias aggregate, string member)
 {
-	enum hasProtection = __traits(compiles, { enum pl = __traits(getProtection, __traits(getMember, aggregate, member)); });
+	enum hasProtection = __traits(compiles, { enum pl = __traits(getProtection, __traits(getMember, typeof(aggregate), member)); });
 }
 
 // This trait defines what members should be drawn -
@@ -305,11 +316,11 @@ package template Drawable(alias value, string member)
 	static if(member.among("__ctor", "__dtor"))
 		enum Drawable = false;
 	else
-	static if (isReadableAndWritable!(value, member) && !isSomeFunction!(__traits(getMember, value, member)))
+	static if (isReadableAndWritable!(value, member) && !isSomeFunction!(__traits(getMember, typeof(value), member)))
 		enum Drawable = true;
 	else
 	static if (isReadable!(value, member))
-		enum Drawable = isConstProperty!(value, member); // a readable property is getter
+		enum Drawable = isProperty!(value, member); // a readable property is getter
 	else
 		enum Drawable = false;
 }
