@@ -329,20 +329,36 @@ static auto count(M)(M model) @safe
 	import std.traits : isSomeString;
 	import nanogui.experimental.utils : DrawableMembers, drawItem;
 
-	static if (isSomeString!M)
+	static if (RandomAccessRangeModel!(M.Data))
 	{
-		return 1;
+		return model.collapsed ? 1 : (1 + cast(int) model.rarmodel.length);
 	}
-	else static if (isRandomAccessRange!M)
+	else static if (StaticArrayModel!(M.Data))
 	{
-		return model.length;
+		return model.collapsed ? 1 : (1 + cast(int) model.samodel.length);
 	}
-	else static if (isCollapsable!M)
+	else static if (TaggedAlgebraicModel!(M.Data))
+	{
+		size_t l = 0;
+		if (model.collapsed)
+			return l;
+
+		final switch(model.kind)
+		{
+			foreach (i, FT; model.UnionType.FieldTypes)
+			{
+				case __traits(getMember, model.Kind, model.UnionType.fieldNames[i]):
+					l += taggedalgebraic.get!FT(model).count;
+				break;
+			}
+		}
+		return l;
+	}
+	else static if (AggregateModel!(M.Data))
 	{
 		size_t l = 1;
-		static if (is(typeof(model.collapsed) == bool))
-			if (model.collapsed)
-				return l;
+		if (model.collapsed)
+			return l;
 
 		foreach(m; DrawableMembers!M)
 		{
@@ -942,14 +958,18 @@ unittest
 	Context ctx;
 	ctx.processItem;
 	walkAlong(ctx, data, model);
+	assert(model.count == 7);
+	assert(model[4].count == 4);
 
 	data[4] ~= "recently added 4th element";
 	model[4].update(data[4]);
+	assert(model[4].count == 5);
 	walkAlong(ctx, data, model);
 
 	data[4] = data[4].get!(string[])[3..$];
 	data[4].get!(string[])[0] = "former 4th element, now the only one";
 	model[4].update(data[4]);
+	assert(model[4].count == 2);
 	walkAlong(ctx, data, model);
 
 	ctx.output ~= '\0';
@@ -1016,8 +1036,11 @@ unittest
 	Context ctx;
 	ctx.processItem;
 	walkAlong(ctx, data[], model);
+	assert(model.count == 1);
+
 	model.collapsed = false;
 	walkAlong(ctx, data[], model);
+	assert(model.count == 4);
 
 	ctx.output ~= '\0';
 	version(none)
