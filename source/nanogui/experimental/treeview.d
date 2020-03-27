@@ -744,12 +744,14 @@ auto makeModel(T)(auto ref T data)
 void walkAlong(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, ref Model model)
 	if (Data.sizeof > (void*).sizeof)
 {
+	model.size = 0;
 	walkAlongImpl(ctx, data, model);
 }
 
 void walkAlong(Ctx, Data, Model)(ref Ctx ctx, Data data, ref Model model)
 	if (Data.sizeof <= (void*).sizeof)
 {
+	model.size = 0;
 	walkAlongImpl(ctx, data, model);
 }
 
@@ -803,6 +805,7 @@ private void walkAlongImpl(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, re
 							walkAlong(ctx, 
 								taggedalgebraic.get!T(data),
 								taggedalgebraic.get!(.Model!T)(model.tamodel));
+								model.size += taggedalgebraic.get!(.Model!T)(model.tamodel).size;
 						break;
 					}
 				}
@@ -1005,6 +1008,10 @@ unittest
 	model[4].update(data[4]);
 	assert(model[4].count == 2);
 	walkAlong(ctx, data, model);
+
+	import std.stdio;
+	writeln(model);
+	writeln("model.size: ", model.size);
 
 	ctx.output ~= '\0';
 	version(none)
