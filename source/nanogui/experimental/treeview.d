@@ -444,7 +444,7 @@ unittest
 	assert(!modelHasCollapsed!StructWithNestedClass);
 
 	import std.traits : FieldNameTuple;
-	assert(FieldNameTuple!(Model!StructWithStruct).length == 4);
+	assert(FieldNameTuple!(Model!StructWithStruct).length == 5);
 
 	auto ctx = Context();
 	auto ss = StructWithStruct();
@@ -541,8 +541,15 @@ private template TypeOf(alias A)
 	}
 }
 
+mixin template State()
+{
+	float size = 0;
+}
+
 struct Model(alias A) if (StaticArrayModel!(TypeOf!A))
 {
+	mixin State;
+
 	alias Data = TypeOf!A;
 	static assert(isProcessible!Data);
 
@@ -569,6 +576,8 @@ struct Model(alias A) if (RandomAccessRangeModel!(TypeOf!A))
 {
 	import automem : Vector;
 	import std.experimental.allocator.mallocator : Mallocator;
+
+	mixin State;
 
 	alias Data = TypeOf!A;
 	static assert(isProcessible!Data);
@@ -604,6 +613,8 @@ struct Model(alias A) if (RandomAccessRangeModel!(TypeOf!A))
 
 struct Model(alias A) if (TaggedAlgebraicModel!(TypeOf!A))
 {
+	mixin State;
+
 	alias Data = TypeOf!A;
 	static assert(isProcessible!Data);
 
@@ -684,6 +695,8 @@ struct Model(alias A) if (TaggedAlgebraicModel!(TypeOf!A))
 
 struct Model(alias A) if (AggregateModel!(TypeOf!A))
 {
+	mixin State;
+
 	alias Data = TypeOf!A;
 	static assert(isProcessible!Data);
 
@@ -709,6 +722,8 @@ struct Model(alias A) if (AggregateModel!(TypeOf!A))
 
 struct Model(alias A) if (!isCollapsable!(TypeOf!A))
 {
+	mixin State;
+
 	alias Data = TypeOf!A;
 	static assert(isProcessible!Data);
 
@@ -746,7 +761,10 @@ private void walkAlongImpl(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, re
 		// we do not consider this TaggedAlgebraicModel as collapsable itself
 		// because it is just a container so there is no caption for it
 		static if (!TaggedAlgebraicModel!Data)
+		{
 			ctx.processItem("Caption: ", Data.stringof);
+			model.size = ctx.size;
+		}
 
 		if (!model.collapsed)
 		{
@@ -756,13 +774,19 @@ private void walkAlongImpl(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, re
 			static if (StaticArrayModel!Data)
 			{
 				foreach(i; 0..data.length)
+				{
 					walkAlong(ctx, data[i], model.samodel[i]);
+					model.size += model.samodel[i].size;
+				}
 			}
 			else static if (RandomAccessRangeModel!Data)
 			{
 				assert(data.length == model.rarmodel.length);
 				foreach(i; 0..data.length)
+				{
 					walkAlong(ctx, data[i], model.rarmodel[i]);
+					model.size += model.rarmodel[i].size;
+				}
 			}
 			else static if (TaggedAlgebraicModel!Data)
 			{
@@ -786,14 +810,20 @@ private void walkAlongImpl(Ctx, Data, Model)(ref Ctx ctx, auto ref Data data, re
 			else static if (AggregateModel!Data)
 			{
 				static foreach(member; DrawableMembers!Data)
+				{
 					walkAlong(ctx, mixin("data." ~ member), mixin("model." ~ member));
+					model.size += mixin("model." ~ member).size;
+				}
 			}
 			else
 				static assert(0);
 		}
 	}
 	else
+	{
+		model.size = ctx.size;
 		ctx.processItem(data);
+	}
 }
 
 @safe private
@@ -805,6 +835,7 @@ struct Context
 
 	Vector!(char, Mallocator) output;
 	private size_t _indent;
+	private float _size = 14;
 	private Vector!(char, Mallocator) _indentation;
 
 	auto processItem(T...)(T msg) @nogc @trusted
@@ -834,6 +865,9 @@ struct Context
 			_indentation.popBack;
 		}
 	}
+
+	void size(int s)  { _size = s; }
+	auto size() @nogc { return _size; }
 }
 
 // static array
@@ -1037,10 +1071,15 @@ unittest
 	ctx.processItem;
 	walkAlong(ctx, data[], model);
 	assert(model.count == 1);
+	assert(model.size == ctx.size);
 
 	model.collapsed = false;
 	walkAlong(ctx, data[], model);
+
 	assert(model.count == 4);
+	assert(model.size == model.count*ctx.size);
+	foreach(e; model.rarmodel)
+		assert(e.size == ctx.size);
 
 	ctx.output ~= '\0';
 	version(none)
